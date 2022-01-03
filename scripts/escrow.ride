@@ -30,6 +30,18 @@ func crossCheckAmounts(partnerAddress: String, myOfferedAmount: Int, myWantedAmo
         ", but " + partnerAddress + " wants " + partnerWantedAmount.toString() + " and pays " + partnerOfferedAmount.toString()) else true
 }
 
+func checkAsset(wantAssetId: String) = {
+    let asset = wantAssetId.fromStr()
+    strict result = if (asset != unit) then {
+        let nfo = assetInfo(asset.value())
+        if (nfo == unit) then throw("Invalid wantAssetId: assetInfo missing") else
+        if (nfo.value().id.size() != 32) then throw("Invalid wantAssetId: assetInfo size is " + nfo.value().id.size().toString()) else
+        if (nfo.value().issuer.bytes.size() != 32) then throw("Invalid wantAssetId: issuer address is " + nfo.value().issuer.bytes.toBase58String()) else
+        true
+    } else true
+    asset.toStr()
+}
+
 # Simple escrow
 # Each of partners agree on wanted assetIds and amounts before calling this function
 # Only one deal per address is allowed simultaneously
@@ -40,7 +52,7 @@ func escrow(wantAssetId: String, wantAmount: Int, partnerAddress: String) = {
     if (getString(this, keyAssetId(caller)).isDefined()) then throw("You already have an active deal, please cancel it first") else
     if (i.payments.size() != 1) then throw("Exactly 1 payment expected") else
     strict partner = addressFromStringValue(partnerAddress)
-    strict wantedAssetId = wantAssetId.fromStr().toStr()
+    let wantedAssetId = checkAsset(wantAssetId)
     if (wantAmount <= 0) then throw("Non-positive wantAmount") else
     let partnerAssetId = getString(this, keyAssetId(partnerAddress))
     let myAssetId = i.payments[0].value().assetId
