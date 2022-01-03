@@ -16,6 +16,20 @@ func fromStr(assetIdStr: String) = {
     if (assetIdStr == "WAVES") then unit else assetIdStr.fromBase58String()
 }
 
+func crossCheckAssetIds(partnerAddress: String, myOfferedAssetId: String, myWantedAssetId: String, 
+                        partnerOfferedAssetId: String, partnerWantedAssetId: String) = {
+    if (partnerOfferedAssetId != myWantedAssetId || partnerWantedAssetId != myOfferedAssetId) then 
+        throw("AssetIds don't match: you want " + myWantedAssetId + " and pay " + myOfferedAssetId +
+        ", but " + partnerAddress + " wants " + partnerWantedAssetId + " and pays " + partnerOfferedAssetId) else true
+}
+
+func crossCheckAmounts(partnerAddress: String, myOfferedAmount: Int, myWantedAmount: Int, 
+                       partnerOfferedAmount: Int, partnerWantedAmount: Int) = {
+    if (partnerOfferedAmount != myWantedAmount || partnerWantedAmount != myOfferedAmount) then 
+        throw("Amounts don't match: you want " + myWantedAmount.toString() + " and pay " + myOfferedAmount.toString() +
+        ", but " + partnerAddress + " wants " + partnerWantedAmount.toString() + " and pays " + partnerOfferedAmount.toString()) else true
+}
+
 # Simple escrow
 # Each of partners agree on wanted assetIds and amounts before calling this function
 # Only one deal per address is allowed simultaneously
@@ -30,12 +44,9 @@ func escrow(wantedAssetId: String, wantedAmount: Int, partnerAddress: String) = 
     let myAssetId = i.payments[0].value().assetId
     let myAmount = i.payments[0].value().amount
     if (partnerAssetId.isDefined()) then { # partner was first, try to finish the deal
-        if (partnerAssetId.value() != wantedAssetId || 
-            getString(this, keyWantedAssetId(partnerAddress)).value() != myAssetId.toStr()) then throw("AssetIds don't match: " +
-            ) else
-        if (getInteger(this, keyAmount(partnerAddress)).value() != wantedAmount || 
-            getInteger(this, keyWantedAmount(partnerAddress)).value() != myAmount) then throw("Amounts don't match") else
         if (getString(this, keyPartner(partnerAddress)).value() != caller) then throw("You are not a partner of " + partnerAddress) else
+        strict check = crossCheckAssetIds(partnerAddress, myAssetId.toStr(), wantedAssetId, partnerAssetId.value(), getString(this, keyWantedAssetId(partnerAddress)).value())
+            && crossCheckAmounts(partnerAddress, myAmount, wantedAmount, getInteger(this, keyAmount(partnerAddress)).value(), getInteger(this, keyWantedAmount(partnerAddress)).value())
         [
             ScriptTransfer(partner, myAmount, myAssetId),
             ScriptTransfer(i.caller, wantedAmount, wantedAssetId.fromStr()),
@@ -44,7 +55,7 @@ func escrow(wantedAssetId: String, wantedAmount: Int, partnerAddress: String) = 
             DeleteEntry(keyPartner(partnerAddress)),
             DeleteEntry(keyWantedAssetId(partnerAddress)),
             DeleteEntry(keyWantedAmount(partnerAddress))
-        ] 
+        ]
     } else { # partner didn't call escrow() yet - we're first 
         [
             StringEntry(keyAssetId(caller), myAssetId.toStr()),
