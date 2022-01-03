@@ -39,7 +39,7 @@ func escrow(wantAssetId: String, wantAmount: Int, partnerAddress: String) = {
     let caller = i.caller.toString()
     if (getString(this, keyAssetId(caller)).isDefined()) then throw("You already have an active deal, please cancel it first") else
     if (i.payments.size() != 1) then throw("Exactly 1 payment expected") else
-    let partner = addressFromStringValue(partnerAddress)
+    strict partner = addressFromStringValue(partnerAddress)
     strict wantedAssetId = wantAssetId.fromStr().toStr()
     if (wantAmount <= 0) then throw("Non-positive wantAmount") else
     let partnerAssetId = getString(this, keyAssetId(partnerAddress))
