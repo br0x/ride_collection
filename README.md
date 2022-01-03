@@ -11,3 +11,7 @@ func escrow(wantAssetId: String, wantAmount: Int, partnerAddress: String)
 @Callable(i)
 func cancel()
 - If, for some reason, you don't want to finish the deal, you can cancel it and payment (previously locked during calling escrow) will be returned
+
+# Live testing
+You can try it on MainNet with official Waves dApp interface:
+https://waves-dapp.com/3PAimVkP7cqar6gMKNh5bQDNH9x4U6sXE7u
