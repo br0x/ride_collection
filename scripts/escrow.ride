@@ -35,21 +35,23 @@ func crossCheckAmounts(partnerAddress: String, myOfferedAmount: Int, myWantedAmo
 # Only one deal per address is allowed simultaneously
 # Use "WAVES" to enter WAVES asset
 @Callable(i)
-func escrow(wantedAssetId: String, wantedAmount: Int, partnerAddress: String) = {
+func escrow(wantAssetId: String, wantAmount: Int, partnerAddress: String) = {
     let caller = i.caller.toString()
     if (getString(this, keyAssetId(caller)).isDefined()) then throw("You already have an active deal, please cancel it first") else
     if (i.payments.size() != 1) then throw("Exactly 1 payment expected") else
     let partner = addressFromStringValue(partnerAddress)
+    strict wantedAssetId = wantAssetId.fromStr().toStr()
+    if (wantAmount <= 0) then throw("Non-positive wantAmount") else
     let partnerAssetId = getString(this, keyAssetId(partnerAddress))
     let myAssetId = i.payments[0].value().assetId
     let myAmount = i.payments[0].value().amount
     if (partnerAssetId.isDefined()) then { # partner was first, try to finish the deal
         if (getString(this, keyPartner(partnerAddress)).value() != caller) then throw("You are not a partner of " + partnerAddress) else
         strict check = crossCheckAssetIds(partnerAddress, myAssetId.toStr(), wantedAssetId, partnerAssetId.value(), getString(this, keyWantedAssetId(partnerAddress)).value())
-            && crossCheckAmounts(partnerAddress, myAmount, wantedAmount, getInteger(this, keyAmount(partnerAddress)).value(), getInteger(this, keyWantedAmount(partnerAddress)).value())
+            && crossCheckAmounts(partnerAddress, myAmount, wantAmount, getInteger(this, keyAmount(partnerAddress)).value(), getInteger(this, keyWantedAmount(partnerAddress)).value())
         [
             ScriptTransfer(partner, myAmount, myAssetId),
-            ScriptTransfer(i.caller, wantedAmount, wantedAssetId.fromStr()),
+            ScriptTransfer(i.caller, wantAmount, wantedAssetId.fromStr()),
             DeleteEntry(keyAssetId(partnerAddress)),
             DeleteEntry(keyAmount(partnerAddress)),
             DeleteEntry(keyPartner(partnerAddress)),
@@ -62,7 +64,7 @@ func escrow(wantedAssetId: String, wantedAmount: Int, partnerAddress: String) = 
             IntegerEntry(keyAmount(caller), myAmount),
             StringEntry(keyPartner(caller), partnerAddress),
             StringEntry(keyWantedAssetId(caller), wantedAssetId),
-            IntegerEntry(keyWantedAmount(caller), wantedAmount)
+            IntegerEntry(keyWantedAmount(caller), wantAmount)
         ]
     }
 }
