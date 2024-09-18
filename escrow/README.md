@@ -1,5 +1,5 @@
 # escrow
-RIDE smart contract for exchanging assets between two parties without trust
+RIDE smart contract for exchanging assets on Waves blockchain between two parties without a trust
 
 # Interface
 @Callable(i)
