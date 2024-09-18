@@ -1,0 +1,27 @@
+{-# STDLIB_VERSION 6 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+let MULTX150 = "1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".parseBigIntValue()
+
+func f(t: (BigInt, BigInt)) = {
+  let x = t._1 - MULTX150
+  (x, x + fraction(x, MULTX150, t._2))
+}
+
+# 64 nested f calls
+func e(t: (BigInt, BigInt)) = {
+  f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(t))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+}
+
+@Callable(i)
+func calc() = {
+  let depth = 64 * 22 + 1 # 64 * num_of_e_nested_calls_below + 1 
+  let p = depth.toBigInt() * MULTX150
+  let exp = MULTX150 + MULTX150 + fraction(MULTX150, MULTX150, 
+    e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e(e( # 22 nested calls gives us complexity = 25496, and this is max
+      (p, p)
+    ))))))))))))))))))))))
+    ._2)
+  ([], exp.toString())
+}

@@ -1,0 +1,32 @@
+{-# STDLIB_VERSION 6 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+let MULT36X = "1000000000000000000000000000000000000".parseBigIntValue()
+let MULT18X = "1000000000000000000".parseBigIntValue()
+let E18X =    "2718281828459045235".parseBigIntValue()
+let iters = [
+    80,79,78,77,76,75,74,73,72,71,
+    70,69,68,67,66,65,64,63,62,61,
+    60,59,58,57,56,55,54,53,52,51,
+    50,49,48,47,46,45,44,43,42,41,
+    40,39,38,37,36,35,34,33,32,31,
+    30,29,28,27,26,25,24,23,22,21,
+    20,19,18,17,16,15,14,13,12,11,
+    10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
+# Calculate Incomplete Upper Gamma function Γ(0, z) using continued fractions
+# To compare accuracy, visit https://functions.wolfram.com/webMathematica/Evaluated.jsp?name=Gamma2&plottype=0&vars={%220%22,%224%22}&digits=36
+@Callable(i)
+func gamma(zStr18: String) = { # Example: gamma(\"4000000000000000000\") =4.0 with 18 decimals
+  let z18 = parseBigIntValue(zStr18)
+  let z36 = z18 * MULT18X
+  
+  func chain(acc: BigInt, i: Int) = {
+    z36 + toBigInt(i + i - 1) * MULT36X - fraction(toBigInt(i * i) * MULT36X, MULT36X, acc)
+  }
+  let f = FOLD<80>(iters, MULT36X, chain)
+
+  let exp = pow(E18X, 18, -z18, 18, 18, HALFUP)
+  ([], fraction(exp, MULT36X, f).toString() + " " + f.toString())
+}
