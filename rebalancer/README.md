@@ -3,7 +3,8 @@
 2. Find the delta amount on each market that maximizes the daily income
 
 ### Current Rate curves
-```(200_0000, 2500_0000, 8000_0000, 1_0000_0000) : main market
+```
+(200_0000, 2500_0000, 8000_0000, 1_0000_0000) : main market
 (200_0000, 2500_0000, 8000_0000, 1_0000_0000) : defi market
 (2000_0000, 1_0000_0000, 6000_0000, 4_0000_0000) : low cap market
 ```
