@@ -185,7 +185,7 @@ func rebalanceREADONLY(assetIdStr: String, wallet: String) = {
     let totalWallet = wallet1 + wallet2 + wallet3
     let currIncome = initial[0]._2 + initial[1]._2 + initial[2]._2
     
-    # array for iterating (-100% .. +100%, step 9%):
+    # array for iterating (-100% .. +100%, step 8.33%):
     let steps = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
     # acc: (bestIncome, bestDelta12, bestDelta13)
