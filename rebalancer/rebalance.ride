@@ -11,7 +11,6 @@ let dayBlocks = 1440
 let yearBlocks = 525600
 let yearBlocksBig = toBigInt(525600)
 let reserveFund = 20
-let E8 = 2_7182_8183
 
 let mediator = "3P2mUshsGaj2B5A9rSD4wwXk47fHB16Sidk"
 
@@ -22,10 +21,6 @@ let markets = [
     "3PHpuQUPVUoR3AYzFeJzeWJfYLsLTmWssVH" #, # Low Cap, no setup_maxSupply_9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi
 #    "3PAd9Aqg3cQSzu26MFYWQYcjSXPVCJtuf5V" # Axly Market
 ]
-let tokens0 = "WAVES,DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p,6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ,34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ,Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5,HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS,9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,3VuV5WTmDz47Dmdn3QpcYjzbSdipjQE4JMdNe1xZpX13"
-let tokens1 = "rZMQ6g31Lr7sPAaAoYc4U2PHCVauTuKUSzUbJtUyPZN,6bZbRmou7M7wXBunMXQnZ4Rm66HxZF3KfMEiFwk3wmnA,XjdJKWtPYCz585QB7LnxDP76UGRukazedDubUx9DHQH,AP4Cb5xLYGH6ZigHreCZHoXpQTWDkPsG2BHqfDUx6taJ,EA7siGMSTxz6EtdpkCiVWQHupFT5N7UbvQrW9kvxCE42"
-let tokens2 = "Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on,DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p,8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91,At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL,DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p,WAVES,6phK22ztGBW127gUFmdMEHKB3CVd6ZhWox2WtwJkbqTq,9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS"
-let tokens3 = "2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21,YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7,WAVES,Ehie5xYpeN8op1Cctc6aGUrqx8jq3jtf1DSjXDbfm7aT,6nSpVyNH7yM69eg446wrQR94ipbbcmZMU1ENPwanC97g,4LHHvYGNKJUg5hj65aGD5vgScvCBmLpdRFtjokvCjSL8,C1iWsKGqLwjHUndiQ7iXpdmPum9PeCDFfyXBdJJosDRS,Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5,9dbpSr8d18qWQxn5fJJSS1LLQ8CmSZ6gYmjuPRzg3RBM,9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW,9MKixRt9rNRyaJCT2pexbXkuvpZBdJREdTU36bGit8iw"
 
 # 8 decimals each tuple element
 func getRateCurve(assetIdStr: String, marketStr: String) = {
@@ -127,6 +122,7 @@ func getUr(outdatedTotalSupply6: Int, outdatedTotalBorrow6: Int, outdatedSRate16
     if (down == 0) then 0 else fraction(Scale8, fraction(outdatedTotalBorrow6, outdatedBRate16, Scale16), down)
 }
 
+# let walletDailyIncome = getDailyPercents(supplyApy, walletSupply)
 func getDailyPercents(apy: Int, quantity: Int) = 
     fraction(
         fraction(
@@ -137,9 +133,12 @@ func getDailyPercents(apy: Int, quantity: Int) =
         Scale8
     )
 
-func getIncome(rate8: Int, actualUr8: Int, walletSupply6: Int) = {
-    let supplyRate8 = fraction(fraction(rate8, 8, 10), actualUr8, Scale8)
-    fraction(pow(E8, 8, supplyRate8, 8, 8, DOWN) - Scale8, walletSupply6, Scale8)
+func calcDailyIncome(curve: (Int, Int, Int, Int), oldData: (Int, Int, Int, Int, Int, Int), delta: Int) = {
+    # let (walletSupply6, income6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16) = oldData
+
+    let ur8 = getUr(oldData._3 + fraction(delta, Scale16, oldData._5), oldData._4, oldData._5, oldData._6)
+    let rate8 = getRate(ur8, curve) # APR, 8 decimals
+    getDailyPercents(getSupplyApy(rate8, ur8), oldData._1 + delta)
 }
 
 @Callable(i)
@@ -167,37 +166,36 @@ func rebalanceREADONLY(assetIdStr: String, wallet: String) = {
         let bRate16 = max([outdatedBRate16, Scale16]) + (height - lastRateHeight) * interest16
         let ur8 = getUr(outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16)
         let walletSupply6 = getActualAmount(outdatedWalletSupply6, sRate16) # mul, div Scale16
-        let blockIncome6 = fraction(fraction(fraction(interest16, 8, 10), ur8, Scale16), walletSupply6, Scale8)
-        acc :+ (walletSupply6, blockIncome6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16)
+        let income6 = fraction(fraction(rate8, ur8, Scale8), walletSupply6, Scale8)
+        acc :+ (walletSupply6, income6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16)
     }
     let initial = FOLD<3>([0, 1, 2], [], folder)
 
-    func calculateBlockIncome(curve: (Int, Int, Int, Int), oldData: (Int, Int, Int, Int, Int, Int), delta: Int) = {
-        let (walletSupply6, blockIncome6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16) = oldData
+    func calcRelativeIncome(curve: (Int, Int, Int, Int), oldData: (Int, Int, Int, Int, Int, Int), delta: Int) = {
+        # let (walletSupply6, income6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16) = oldData
 
-        let ur8 = getUr(outdatedTotalSupply6 + fraction(delta, Scale16, sRate16), outdatedTotalBorrow6, sRate16, bRate16)
-        let rate8 = getRate(ur8, curve) # 8 decimals
-        let interest16 = max([fraction(rate8, Scale8, yearBlocks), 1]) # per block
-        fraction(fraction(fraction(interest16, 8, 10), ur8, Scale16), walletSupply6 + delta, Scale8)
+        let ur8 = getUr(oldData._3 + fraction(delta, Scale16, oldData._5), oldData._4, oldData._5, oldData._6)
+        let rate8 = getRate(ur8, curve) # APR, 8 decimals
+        fraction(fraction(rate8, ur8, Scale8), oldData._1 + delta, Scale8)
     }
 
     let wallet1 = initial[0]._1
     let wallet2 = initial[1]._1
     let wallet3 = initial[2]._1
     let totalWallet = wallet1 + wallet2 + wallet3
+    let currIncome = initial[0]._2 + initial[1]._2 + initial[2]._2
     
-    # массив точек для перебора (от -100% до +100% с шагом 5%): complexity 160623
-    let steps = [-11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
-                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    # array for iterating (-100% .. +100%, step 9%):
+    let steps = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
 
-    # Структура аккумулятора: (bestIncome, bestDelta12, bestDelta13)
-    # Перебор для delta12 (переток между market1 и market2)
+    # acc: (bestIncome, bestDelta12, bestDelta13)
+    # loop by delta12 (flow between market1 and market2)
     func folder12(outerAcc: (Int, Int, Int), delta12Step: Int) = {
-        let delta12 = fraction(totalWallet, delta12Step, 11)
+        let delta12 = fraction(totalWallet, delta12Step, 12)
         
-        # Вложенный перебор для delta13 (переток между market1 и market3)
+        # loop by delta13 (flow between market1 and market3)
         func folder13(innerAcc: (Int, Int, Int), delta13Step: Int) = {
-            let delta13 = fraction(totalWallet, delta13Step, 11)
+            let delta13 = fraction(totalWallet, delta13Step, 12)
             
             let d1 = delta12 + delta13
             let d2 = -delta12
@@ -207,19 +205,29 @@ func rebalanceREADONLY(assetIdStr: String, wallet: String) = {
             let newWallet3 = wallet3 + d3
             
             if (newWallet1 < 0 || newWallet2 < 0 || newWallet3 < 0) then innerAcc else {
-                let blockIncome1 = calculateBlockIncome(curves[0], initial[0], d1)
-                let blockIncome2 = calculateBlockIncome(curves[1], initial[1], d2)
-                let blockIncome3 = calculateBlockIncome(curves[2], initial[2], d3)
+                let blockIncome1 = calcRelativeIncome(curves[0], initial[0], d1)
+                let blockIncome2 = calcRelativeIncome(curves[1], initial[1], d2)
+                let blockIncome3 = calcRelativeIncome(curves[2], initial[2], d3)
                 let totalIncome = blockIncome1 + blockIncome2 + blockIncome3
                 
                 if (totalIncome > innerAcc._1) then (totalIncome, delta12, delta13) else innerAcc
             }
         }
-        FOLD<23>(steps, outerAcc, folder13)
+        FOLD<25>(steps, outerAcc, folder13)
     }
-    let outerFold = FOLD<23>(steps, (initial[0]._2 + initial[1]._2 + initial[2]._2, 0, 0), folder12)
+    let r = FOLD<25>(steps, (currIncome, 0, 0), folder12)
     # (bestIncome, bestDelta12, bestDelta13)
-    ([], (height, initial, outerFold))
+    let curIncome1 = calcDailyIncome(curves[0], initial[0], 0)
+    let curIncome2 = calcDailyIncome(curves[1], initial[1], 0)
+    let curIncome3 = calcDailyIncome(curves[2], initial[2], 0)
+    let curTotalDaily = curIncome1 + curIncome2 + curIncome3
+    let d1 = r._2 + r._3
+    let d2 = -r._2
+    let d3 = -r._3
+    let newIncome1 = calcDailyIncome(curves[0], initial[0], d1)
+    let newIncome2 = calcDailyIncome(curves[1], initial[1], d2)
+    let newIncome3 = calcDailyIncome(curves[2], initial[2], d3)
+    let newTotalDaily = newIncome1 + newIncome2 + newIncome3
+    ([], ([curIncome1, curIncome2, curIncome3], [d1, d2, d3], [newIncome1, newIncome2, newIncome3], [curTotalDaily, newTotalDaily]))
 }
-# TODO: находить грубо диапазоны delta12 и delta13, дающие хоть какой-то выигрыш и дробить их более мелко
-# начинать за 0.5 грубого шага от границы диапазона
+# TODO: second pass with smaller steps
