@@ -205,10 +205,10 @@ func rebalanceREADONLY(assetIdStr: String, wallet: String) = {
             let newWallet3 = wallet3 + d3
             
             if (newWallet1 < 0 || newWallet2 < 0 || newWallet3 < 0) then innerAcc else {
-                let blockIncome1 = calcRelativeIncome(curves[0], initial[0], d1)
-                let blockIncome2 = calcRelativeIncome(curves[1], initial[1], d2)
-                let blockIncome3 = calcRelativeIncome(curves[2], initial[2], d3)
-                let totalIncome = blockIncome1 + blockIncome2 + blockIncome3
+                let income1 = calcRelativeIncome(curves[0], initial[0], d1)
+                let income2 = calcRelativeIncome(curves[1], initial[1], d2)
+                let income3 = calcRelativeIncome(curves[2], initial[2], d3)
+                let totalIncome = income1 + income2 + income3
                 
                 if (totalIncome > innerAcc._1) then (totalIncome, delta12, delta13) else innerAcc
             }
