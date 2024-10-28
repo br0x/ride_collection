@@ -1,0 +1,225 @@
+{-# STDLIB_VERSION 6 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+{-# IMPORT common.ride #-}
+
+let Scale8 = 1_0000_0000
+let Scale8Big = toBigInt(1_0000_0000)
+let Scale16 = 1_0000_0000_0000_0000
+let Scale16Big = toBigInt(1_0000_0000_0000_0000)
+let dayBlocks = 1440
+let yearBlocks = 525600
+let yearBlocksBig = toBigInt(525600)
+let reserveFund = 20
+let E8 = 2_7182_8183
+
+let mediator = "3P2mUshsGaj2B5A9rSD4wwXk47fHB16Sidk"
+
+let markets = [
+    "3P4uA5etnZi4AmBabKinq2bMiWU8KcnHZdH", # Main Market, setup_maxSupply_9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi = 120000_000000
+#    "3P8Df2b7ywHtLBHBe8PBVQYd3A5MdEEJAou", # ROME
+    "3P4DK5VzDwL3vfc5ahUEhtoe5ByZNyacJ3X", # Waves DeFi, no setup_maxSupply_9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi
+    "3PHpuQUPVUoR3AYzFeJzeWJfYLsLTmWssVH" #, # Low Cap, no setup_maxSupply_9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi
+#    "3PAd9Aqg3cQSzu26MFYWQYcjSXPVCJtuf5V" # Axly Market
+]
+let tokens0 = "WAVES,DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p,6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ,34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ,Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5,HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS,9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,3VuV5WTmDz47Dmdn3QpcYjzbSdipjQE4JMdNe1xZpX13"
+let tokens1 = "rZMQ6g31Lr7sPAaAoYc4U2PHCVauTuKUSzUbJtUyPZN,6bZbRmou7M7wXBunMXQnZ4Rm66HxZF3KfMEiFwk3wmnA,XjdJKWtPYCz585QB7LnxDP76UGRukazedDubUx9DHQH,AP4Cb5xLYGH6ZigHreCZHoXpQTWDkPsG2BHqfDUx6taJ,EA7siGMSTxz6EtdpkCiVWQHupFT5N7UbvQrW9kvxCE42"
+let tokens2 = "Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on,DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p,8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91,At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL,DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p,WAVES,6phK22ztGBW127gUFmdMEHKB3CVd6ZhWox2WtwJkbqTq,9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS"
+let tokens3 = "2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21,YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7,WAVES,Ehie5xYpeN8op1Cctc6aGUrqx8jq3jtf1DSjXDbfm7aT,6nSpVyNH7yM69eg446wrQR94ipbbcmZMU1ENPwanC97g,4LHHvYGNKJUg5hj65aGD5vgScvCBmLpdRFtjokvCjSL8,C1iWsKGqLwjHUndiQ7iXpdmPum9PeCDFfyXBdJJosDRS,Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5,9dbpSr8d18qWQxn5fJJSS1LLQ8CmSZ6gYmjuPRzg3RBM,9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW,9MKixRt9rNRyaJCT2pexbXkuvpZBdJREdTU36bGit8iw"
+
+# 8 decimals each tuple element
+func getRateCurve(assetIdStr: String, marketStr: String) = {
+    let marketAddress = addressFromStringValue(marketStr)
+    let setupRateCurve = getString(marketAddress, "setup_rateCurve_" + assetIdStr) # no, no, no
+    if (isDefined(setupRateCurve)) then {
+        let curveArr = split_4C(value(setupRateCurve), ",")
+        (parseIntValue(curveArr[0]), parseIntValue(curveArr[1]), parseIntValue(curveArr[2]), parseIntValue(curveArr[3]))
+    } else match marketStr {
+        case "3P4uA5etnZi4AmBabKinq2bMiWU8KcnHZdH" => # Main Market
+            match assetIdStr {
+                case "9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi" => (2000000, 25000000, 80000000, 100000000) # USDT-ERC20-PPT
+                case "HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW" => (2000000, 25000000, 80000000, 100000000)
+                case "34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ" => (2000000, 25000000, 80000000, 100000000)
+                case "6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ" => (2000000, 25000000, 80000000, 100000000)
+                case "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p" => (2000000, 25000000, 80000000, 100000000)
+                case "Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5" => (2000000, 40000000, 80000000, 150000000)
+                case "HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS" => (0, 100000000, 80000000, 400000000)
+                case "WAVES" => (2000000, 30000000, 80000000, 90000000)
+                case "Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on" => (0, 20000000, 80000000, 40000000)
+                case "DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p" => (0, 20000000, 80000000, 100000000)
+                case "8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91" => (0, 30000000, 80000000, 40000000)
+                case "At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL" => (0, 25000000, 80000000, 40000000)
+                case "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS" => (2000000, 30000000, 80000000, 50000000)
+                case "474jTeYx2r2Va35794tCScAXWJG9hU2HcgxzMowaZUnu" => (2000000, 30000000, 80000000, 50000000)
+                case "5UYBPpq4WoU5n4MwpFkgJnW3Fq4B1u3ukpK33ik4QerR" => (2000000, 30000000, 80000000, 50000000)
+                case "2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21" => (2000000, 40000000, 80000000, 100000000)
+                case "YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7" => (2000000, 30000000, 80000000, 80000000) # sWAVES
+                case "3VuV5WTmDz47Dmdn3QpcYjzbSdipjQE4JMdNe1xZpX13" => (0, 100000000, 80000000, 400000000)
+                case _ => (0, 20000000, 80000000, 80000000)
+            }
+        case "3P8Df2b7ywHtLBHBe8PBVQYd3A5MdEEJAou" => (20000000, 100000000, 60000000, 400000000) # ROME
+        case "3P4DK5VzDwL3vfc5ahUEhtoe5ByZNyacJ3X" => # Waves DeFi
+            match assetIdStr {
+                case "9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi" => (2000000, 25000000, 80000000, 100000000)
+                case "HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW" => (2000000, 25000000, 80000000, 100000000)
+                case "34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ" => (2000000, 25000000, 80000000, 100000000)
+                case "6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ" => (2000000, 25000000, 80000000, 100000000)
+                case "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p" => (2000000, 25000000, 80000000, 100000000)
+                case "Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5" => (2000000, 40000000, 80000000, 150000000)
+                case "HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS" => (0, 50000000, 80000000, 400000000)
+                case "WAVES" => (2000000, 30000000, 80000000, 80000000)
+                case "Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on" => (0, 20000000, 80000000, 40000000)
+                case "DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p" => (0, 20000000, 80000000, 100000000)
+                case "8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91" => (0, 30000000, 80000000, 40000000)
+                case "At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL" => (0, 25000000, 80000000, 40000000)
+                case "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS" => (2000000, 30000000, 80000000, 50000000)
+                case "474jTeYx2r2Va35794tCScAXWJG9hU2HcgxzMowaZUnu" => (2000000, 30000000, 80000000, 50000000)
+                case "5UYBPpq4WoU5n4MwpFkgJnW3Fq4B1u3ukpK33ik4QerR" => (2000000, 30000000, 80000000, 50000000)
+                case "2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21" => (2000000, 40000000, 80000000, 100000000)
+                case "YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7" => (2000000, 30000000, 80000000, 80000000)
+                case "3VuV5WTmDz47Dmdn3QpcYjzbSdipjQE4JMdNe1xZpX13" => (0, 100000000, 80000000, 400000000)
+                case _ => (0, 20000000, 80000000, 80000000)
+            }
+        case "3PHpuQUPVUoR3AYzFeJzeWJfYLsLTmWssVH" => (20000000, 100000000, 60000000, 400000000) # Low Cap
+        case "3PAd9Aqg3cQSzu26MFYWQYcjSXPVCJtuf5V" => # Axly Market
+            match assetIdStr {
+                case "9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi" => (2000000, 25000000, 80000000, 100000000)
+                case "HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW" => (2000000, 25000000, 80000000, 100000000)
+                case "34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ" => (2000000, 25000000, 80000000, 100000000)
+                case "6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ" => (2000000, 25000000, 80000000, 100000000)
+                case "DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p" => (2000000, 25000000, 80000000, 100000000)
+                case "Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5" => (2000000, 40000000, 80000000, 150000000)
+                case "HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS" => (0, 20000000, 80000000, 40000000)
+                case "WAVES" => (2000000, 30000000, 80000000, 50000000)
+                case "Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on" => (0, 20000000, 80000000, 40000000)
+                case "DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p" => (0, 20000000, 80000000, 100000000)
+                case "8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91" => (0, 30000000, 80000000, 40000000)
+                case "At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL" => (0, 25000000, 80000000, 40000000)
+                case "8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS" => (2000000, 30000000, 80000000, 50000000)
+                case "474jTeYx2r2Va35794tCScAXWJG9hU2HcgxzMowaZUnu" => (2000000, 30000000, 80000000, 50000000)
+                case "5UYBPpq4WoU5n4MwpFkgJnW3Fq4B1u3ukpK33ik4QerR" => (2000000, 30000000, 80000000, 50000000)
+                case "2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21" => (2000000, 40000000, 80000000, 100000000)
+                case "YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7" => (2000000, 30000000, 80000000, 80000000)
+                case _ => (0, 20000000, 80000000, 80000000)
+            }
+        case _ => throw("Unknown market")
+    } # market match
+}
+
+func getActualAmount(outdatedAmount: Int, actualRate16: Int) = fraction(outdatedAmount, actualRate16, Scale16)
+
+# both rate and actualUr are 8 decimals
+func getSupplyApy(rate: Int, actualUr: Int) = {
+    let supplyRate = fraction(fraction(rate, 8, 10), actualUr, Scale8) # 8 decimals
+    pow(Scale16Big + fraction(supplyRate.toBigInt(), Scale8Big, yearBlocksBig), 16, yearBlocksBig, 0, 8, DOWN).toInt() - Scale8
+}
+
+# rate (8 decimals)
+func getRate(ur: Int, curve: (Int, Int, Int, Int)) = {
+    (curve._1 + (if (ur <= curve._3)
+        then fraction(ur, curve._2, curve._3)
+        else (curve._2 + fraction(ur - curve._3, curve._4, 1_0000_0000 - curve._3))))
+}
+
+# outdatedUr (8 decimals)
+func getUr(outdatedTotalSupply6: Int, outdatedTotalBorrow6: Int, outdatedSRate16: Int, outdatedBRate16: Int) = {
+    let down = fraction(outdatedTotalSupply6, outdatedSRate16, Scale16)
+    if (down == 0) then 0 else fraction(Scale8, fraction(outdatedTotalBorrow6, outdatedBRate16, Scale16), down)
+}
+
+func getDailyPercents(apy: Int, quantity: Int) = 
+    fraction(
+        fraction(
+            pow(Scale8Big + toBigInt(apy), 8, Scale16Big / yearBlocksBig, 16, 16, DOWN).toInt() - Scale16, 
+            dayBlocks, 
+            Scale8), 
+        quantity, 
+        Scale8
+    )
+
+func getIncome(rate8: Int, actualUr8: Int, walletSupply6: Int) = {
+    let supplyRate8 = fraction(fraction(rate8, 8, 10), actualUr8, Scale8)
+    fraction(pow(E8, 8, supplyRate8, 8, 8, DOWN) - Scale8, walletSupply6, Scale8)
+}
+
+@Callable(i)
+func rebalanceREADONLY(assetIdStr: String, wallet: String) = {
+    func getCurve(acc: List[(Int, Int, Int, Int)], el: Int) = {
+        let marketStr = markets[el]
+        acc :+ getRateCurve(assetIdStr, marketStr)
+    }
+    let curves = FOLD<3>([0, 1, 2], [], getCurve)
+
+    func folder(acc: List[(Int, Int, Int, Int, Int, Int)], el: Int) = {
+        let marketStr = markets[el]
+        let marketAddress = addressFromStringValue(marketStr)
+        let lastRateHeight = marketAddress.getInteger("lastRateHeight").valueOrElse(0)
+        let outdatedTotalSupply6 = marketAddress.getInteger("total_supplied_" + assetIdStr).valueOrElse(0)
+        let outdatedTotalBorrow6 = marketAddress.getInteger("total_borrowed_" + assetIdStr).valueOrElse(0)
+        let outdatedSRate16 = marketAddress.getInteger(assetIdStr + "_sRate").valueOrElse(0)
+        let outdatedBRate16 = marketAddress.getInteger(assetIdStr + "_bRate").valueOrElse(0)
+        let outdatedWalletSupply6 = marketAddress.getInteger(wallet + "_supplied_" + assetIdStr).valueOrElse(0)
+
+        let outdatedUr8 = getUr(outdatedTotalSupply6, outdatedTotalBorrow6, outdatedSRate16, outdatedBRate16)
+        let rate8 = getRate(outdatedUr8, curves[el]) # 8 decimals
+        let interest16 = max([fraction(rate8, Scale8, yearBlocks), 1]) # per block
+        let sRate16 = max([outdatedSRate16, Scale16]) + (height - lastRateHeight) * fraction(interest16, outdatedUr8, Scale8) * 8 / 10
+        let bRate16 = max([outdatedBRate16, Scale16]) + (height - lastRateHeight) * interest16
+        let ur8 = getUr(outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16)
+        let walletSupply6 = getActualAmount(outdatedWalletSupply6, sRate16) # mul, div Scale16
+        let blockIncome6 = fraction(fraction(fraction(interest16, 8, 10), ur8, Scale16), walletSupply6, Scale8)
+        acc :+ (walletSupply6, blockIncome6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16)
+    }
+    let initial = FOLD<3>([0, 1, 2], [], folder)
+
+    func calculateBlockIncome(curve: (Int, Int, Int, Int), oldData: (Int, Int, Int, Int, Int, Int), delta: Int) = {
+        let (walletSupply6, blockIncome6, outdatedTotalSupply6, outdatedTotalBorrow6, sRate16, bRate16) = oldData
+
+        let ur8 = getUr(outdatedTotalSupply6 + fraction(delta, Scale16, sRate16), outdatedTotalBorrow6, sRate16, bRate16)
+        let rate8 = getRate(ur8, curve) # 8 decimals
+        let interest16 = max([fraction(rate8, Scale8, yearBlocks), 1]) # per block
+        fraction(fraction(fraction(interest16, 8, 10), ur8, Scale16), walletSupply6 + delta, Scale8)
+    }
+
+    let wallet1 = initial[0]._1
+    let wallet2 = initial[1]._1
+    let wallet3 = initial[2]._1
+    let totalWallet = wallet1 + wallet2 + wallet3
+    
+    # массив точек для перебора (от -100% до +100% с шагом 5%): complexity 160623
+    let steps = [-11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1,
+                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    # Структура аккумулятора: (bestIncome, bestDelta12, bestDelta13)
+    # Перебор для delta12 (переток между market1 и market2)
+    func folder12(outerAcc: (Int, Int, Int), delta12Step: Int) = {
+        let delta12 = fraction(totalWallet, delta12Step, 11)
+        
+        # Вложенный перебор для delta13 (переток между market1 и market3)
+        func folder13(innerAcc: (Int, Int, Int), delta13Step: Int) = {
+            let delta13 = fraction(totalWallet, delta13Step, 11)
+            
+            let d1 = delta12 + delta13
+            let d2 = -delta12
+            let d3 = -delta13
+            let newWallet1 = wallet1 + d1
+            let newWallet2 = wallet2 + d2
+            let newWallet3 = wallet3 + d3
+            
+            if (newWallet1 < 0 || newWallet2 < 0 || newWallet3 < 0) then innerAcc else {
+                let blockIncome1 = calculateBlockIncome(curves[0], initial[0], d1)
+                let blockIncome2 = calculateBlockIncome(curves[1], initial[1], d2)
+                let blockIncome3 = calculateBlockIncome(curves[2], initial[2], d3)
+                let totalIncome = blockIncome1 + blockIncome2 + blockIncome3
+                
+                if (totalIncome > innerAcc._1) then (totalIncome, delta12, delta13) else innerAcc
+            }
+        }
+        FOLD<23>(steps, outerAcc, folder13)
+    }
+    let outerFold = FOLD<23>(steps, (initial[0]._2 + initial[1]._2 + initial[2]._2, 0, 0), folder12)
+    # (bestIncome, bestDelta12, bestDelta13)
+    ([], (height, initial, outerFold))
+}
+# TODO: находить грубо диапазоны delta12 и delta13, дающие хоть какой-то выигрыш и дробить их более мелко
+# начинать за 0.5 грубого шага от границы диапазона

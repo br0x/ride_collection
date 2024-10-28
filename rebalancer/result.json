@@ -1,0 +1,143 @@
+{
+    "result": {
+        "type": "Tuple",
+        "value": {
+            "_1": {
+                "type": "Array",
+                "value": []
+            },
+            "_2": {
+                "type": "Tuple",
+                "value": {
+                    "_1": {
+                        "type": "Int",
+                        "value": 4411895
+                    },
+                    "_2": {
+                        "type": "Array",
+                        "value": [
+                            {
+                                "type": "Tuple",
+                                "value": {
+                                    "_3": {
+                                        "type": "Int",
+                                        "value": 26732593583
+                                    },
+                                    "_2": {
+                                        "type": "Int",
+                                        "value": 1642
+                                    },
+                                    "_6": {
+                                        "type": "Int",
+                                        "value": 15710550841059891
+                                    },
+                                    "_1": {
+                                        "type": "Int",
+                                        "value": 2527669450
+                                    },
+                                    "_4": {
+                                        "type": "Int",
+                                        "value": 19837267383
+                                    },
+                                    "_5": {
+                                        "type": "Int",
+                                        "value": 13757776134533753
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Tuple",
+                                "value": {
+                                    "_3": {
+                                        "type": "Int",
+                                        "value": 46552953081
+                                    },
+                                    "_2": {
+                                        "type": "Int",
+                                        "value": 40
+                                    },
+                                    "_6": {
+                                        "type": "Int",
+                                        "value": 14718103540453393
+                                    },
+                                    "_1": {
+                                        "type": "Int",
+                                        "value": 129938226
+                                    },
+                                    "_4": {
+                                        "type": "Int",
+                                        "value": 32329701820
+                                    },
+                                    "_5": {
+                                        "type": "Int",
+                                        "value": 12967389554178400
+                                    }
+                                }
+                            },
+                            {
+                                "type": "Tuple",
+                                "value": {
+                                    "_3": {
+                                        "type": "Int",
+                                        "value": 44437222083
+                                    },
+                                    "_2": {
+                                        "type": "Int",
+                                        "value": 4436
+                                    },
+                                    "_6": {
+                                        "type": "Int",
+                                        "value": 19477563716176265
+                                    },
+                                    "_1": {
+                                        "type": "Int",
+                                        "value": 9859130584
+                                    },
+                                    "_4": {
+                                        "type": "Int",
+                                        "value": 10643821814
+                                    },
+                                    "_5": {
+                                        "type": "Int",
+                                        "value": 12766072291355596
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "_3": {
+                        "type": "Tuple",
+                        "value": {
+                            "_1": {
+                                "type": "Int",
+                                "value": 6118
+                            },
+                            "_2": {
+                                "type": "Int",
+                                "value": 0
+                            },
+                            "_3": {
+                                "type": "Int",
+                                "value": 0
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "complexity": 10510,
+    "stateChanges": {
+        "data": [],
+        "transfers": [],
+        "issues": [],
+        "reissues": [],
+        "burns": [],
+        "sponsorFees": [],
+        "leases": [],
+        "leaseCancels": [],
+        "invokes": []
+    },
+    "expr": "rebalanceREADONLY(\"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\", \"3P64qEVzuGzBJuYfDXYisFtokJChSRa8uja\")",
+    "address": "3PK88nVJM6mXHCNkp5WKkk1Y4wWxu47zWzz"
+}

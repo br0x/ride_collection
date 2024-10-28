@@ -1,0 +1,890 @@
+{-# STDLIB_VERSION 6 #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+{-# CONTENT_TYPE DAPP #-}
+let Waves = \"WAVES\"
+
+let Scale6 = 1000000
+
+let Scale8 = 100000000
+
+let Scale8Big = toBigInt(100000000)
+
+let Scale10 = 10000000000
+
+let Scale16 = 10000000000000000
+
+let Scale16Big = toBigInt(10000000000000000)
+
+let dayBlocks = 1440
+
+let yearBlocks = 525600
+
+let yearBlocksBig = toBigInt(525600)
+
+let reserveFund = 20
+
+let arr12 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+let usdtIdStr = \"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\"
+
+let usdcIdStr = \"HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW\"
+
+let romeIdStr = \"AP4Cb5xLYGH6ZigHreCZHoXpQTWDkPsG2BHqfDUx6taJ\"
+
+let oracleAddressStr = \"3P8d1E1BLKoD52y3bQJ1bDTd2TD1gpaLn9t\"
+
+let axlyAddress = Address(base58'3PLsYkBw7taejV1J3qWPCN2yeyVRu31d5HW')
+
+let axlyLPs = [\"7KZbJrVopwJhkdwbe1eFDBbex4dkY63MxjTNjqXtrzj1\", \"Btw3G1j4wQgdp49PTxaFkNvn75dQtqGDM7ejQppHnWC1\", \"BiSzFe8nSL78oZaebfoin5vBZ5Pze6d7kaeijLqr5xZe\", \"F2AKkA513k5yHEJkLsU6vWxCYYk811GpjLhwEv2WGwZ9\", \"4CQ5CPGLXLbWBUs2JBjKUaRqF49CmKHkwzvPgSvQpAQV\", \"6iMB6LKSrgv9waEvEnN6Ydyx7dfxPnGcTw8318WVm5bR\"]
+
+func getRateCurve (assetIdStr: String, marketStr: String) = {
+    let marketAddress = addressFromStringValue(marketStr)
+    let setupRateCurve = getString(marketAddress, (\"setup_rateCurve_\" + assetIdStr))
+    if (isDefined(setupRateCurve))
+        then {
+            let curveArr = split_4C(value(setupRateCurve), \",\")
+            $Tuple4(parseIntValue(curveArr[0]), parseIntValue(curveArr[1]), parseIntValue(curveArr[2]), parseIntValue(curveArr[3]))
+            }
+        else         match marketStr {
+            case _ => 
+                if ((\"3P4uA5etnZi4AmBabKinq2bMiWU8KcnHZdH\" == $match0))
+                    then                     match assetIdStr {
+                        case _ => 
+                            if ((\"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\" == $match1))
+                                then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                else if ((\"HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW\" == $match1))
+                                    then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                    else if ((\"34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ\" == $match1))
+                                        then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                        else if ((\"6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ\" == $match1))
+                                            then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                            else if ((\"DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p\" == $match1))
+                                                then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                else if ((\"Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5\" == $match1))
+                                                    then $Tuple4(2000000, 40000000, 80000000, 150000000)
+                                                    else if ((\"HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS\" == $match1))
+                                                        then $Tuple4(0, 100000000, 80000000, 400000000)
+                                                        else if ((\"WAVES\" == $match1))
+                                                            then $Tuple4(2000000, 30000000, 80000000, 90000000)
+                                                            else if ((\"Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on\" == $match1))
+                                                                then $Tuple4(0, 20000000, 80000000, 40000000)
+                                                                else if ((\"DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p\" == $match1))
+                                                                    then $Tuple4(0, 20000000, 80000000, 100000000)
+                                                                    else if ((\"8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91\" == $match1))
+                                                                        then $Tuple4(0, 30000000, 80000000, 40000000)
+                                                                        else if ((\"At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL\" == $match1))
+                                                                            then $Tuple4(0, 25000000, 80000000, 40000000)
+                                                                            else if ((\"8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS\" == $match1))
+                                                                                then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                else if ((\"474jTeYx2r2Va35794tCScAXWJG9hU2HcgxzMowaZUnu\" == $match1))
+                                                                                    then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                    else if ((\"5UYBPpq4WoU5n4MwpFkgJnW3Fq4B1u3ukpK33ik4QerR\" == $match1))
+                                                                                        then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                        else if ((\"2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21\" == $match1))
+                                                                                            then $Tuple4(2000000, 40000000, 80000000, 100000000)
+                                                                                            else if ((\"YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7\" == $match1))
+                                                                                                then $Tuple4(2000000, 30000000, 80000000, 80000000)
+                                                                                                else if ((\"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\" == $match1))
+                                                                                                    then $Tuple4(0, 50000000, 80000000, 200000000)
+                                                                                                    else if ((\"3VuV5WTmDz47Dmdn3QpcYjzbSdipjQE4JMdNe1xZpX13\" == $match1))
+                                                                                                        then $Tuple4(0, 100000000, 80000000, 400000000)
+                                                                                                        else $Tuple4(0, 20000000, 80000000, 80000000)
+                    }
+                    else if ((\"3P8Df2b7ywHtLBHBe8PBVQYd3A5MdEEJAou\" == $match0))
+                        then $Tuple4(20000000, 100000000, 60000000, 400000000)
+                        else if ((\"3P4DK5VzDwL3vfc5ahUEhtoe5ByZNyacJ3X\" == $match0))
+                            then                             match assetIdStr {
+                                case _ => 
+                                    if ((\"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\" == $match1))
+                                        then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                        else if ((\"HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW\" == $match1))
+                                            then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                            else if ((\"34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ\" == $match1))
+                                                then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                else if ((\"6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ\" == $match1))
+                                                    then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                    else if ((\"DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p\" == $match1))
+                                                        then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                        else if ((\"Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5\" == $match1))
+                                                            then $Tuple4(2000000, 40000000, 80000000, 150000000)
+                                                            else if ((\"HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS\" == $match1))
+                                                                then $Tuple4(0, 50000000, 80000000, 400000000)
+                                                                else if ((\"WAVES\" == $match1))
+                                                                    then $Tuple4(2000000, 30000000, 80000000, 80000000)
+                                                                    else if ((\"Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on\" == $match1))
+                                                                        then $Tuple4(0, 20000000, 80000000, 40000000)
+                                                                        else if ((\"DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p\" == $match1))
+                                                                            then $Tuple4(0, 20000000, 80000000, 100000000)
+                                                                            else if ((\"8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91\" == $match1))
+                                                                                then $Tuple4(0, 30000000, 80000000, 40000000)
+                                                                                else if ((\"At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL\" == $match1))
+                                                                                    then $Tuple4(0, 25000000, 80000000, 40000000)
+                                                                                    else if ((\"8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS\" == $match1))
+                                                                                        then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                        else if ((\"474jTeYx2r2Va35794tCScAXWJG9hU2HcgxzMowaZUnu\" == $match1))
+                                                                                            then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                            else if ((\"5UYBPpq4WoU5n4MwpFkgJnW3Fq4B1u3ukpK33ik4QerR\" == $match1))
+                                                                                                then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                                else if ((\"2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21\" == $match1))
+                                                                                                    then $Tuple4(2000000, 40000000, 80000000, 100000000)
+                                                                                                    else if ((\"YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7\" == $match1))
+                                                                                                        then $Tuple4(2000000, 30000000, 80000000, 80000000)
+                                                                                                        else if ((\"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\" == $match1))
+                                                                                                            then $Tuple4(0, 50000000, 80000000, 200000000)
+                                                                                                            else if ((\"3VuV5WTmDz47Dmdn3QpcYjzbSdipjQE4JMdNe1xZpX13\" == $match1))
+                                                                                                                then $Tuple4(0, 100000000, 80000000, 400000000)
+                                                                                                                else $Tuple4(0, 20000000, 80000000, 80000000)
+                            }
+                            else if ((\"3PHpuQUPVUoR3AYzFeJzeWJfYLsLTmWssVH\" == $match0))
+                                then $Tuple4(20000000, 100000000, 60000000, 400000000)
+                                else if ((\"3PAd9Aqg3cQSzu26MFYWQYcjSXPVCJtuf5V\" == $match0))
+                                    then                                     match assetIdStr {
+                                        case _ => 
+                                            if ((\"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi\" == $match1))
+                                                then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                else if ((\"HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW\" == $match1))
+                                                    then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                    else if ((\"34N9YcEETLWn93qYQ64EsP1x89tSruJU44RrEMSXXEPJ\" == $match1))
+                                                        then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                        else if ((\"6XtHjpXbs9RRJP2Sr9GUyVqzACcby9TkThHXnjVC5CDJ\" == $match1))
+                                                            then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                            else if ((\"DG2xFkPdDwKUoBkzGAhQtLpSGzfXLiCYPEzeKH2Ad24p\" == $match1))
+                                                                then $Tuple4(2000000, 25000000, 80000000, 100000000)
+                                                                else if ((\"Ajso6nTTjptu2UHLx6hfSXVtHFtRBJCkKYd5SAyj7zf5\" == $match1))
+                                                                    then $Tuple4(2000000, 40000000, 80000000, 150000000)
+                                                                    else if ((\"HEB8Qaw9xrWpWs8tHsiATYGBWDBtP2S7kcPALrMu43AS\" == $match1))
+                                                                        then $Tuple4(0, 20000000, 80000000, 40000000)
+                                                                        else if ((\"WAVES\" == $match1))
+                                                                            then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                            else if ((\"Atqv59EYzjFGuitKVnMRk6H8FukjoV3ktPorbEys25on\" == $match1))
+                                                                                then $Tuple4(0, 20000000, 80000000, 40000000)
+                                                                                else if ((\"DSbbhLsSTeDg5Lsiufk2Aneh3DjVqJuPr2M9uU1gwy5p\" == $match1))
+                                                                                    then $Tuple4(0, 20000000, 80000000, 100000000)
+                                                                                    else if ((\"8t4DPWTwPzpatHA9AkTxWAB47THnYzBsDnoY7fQqbG91\" == $match1))
+                                                                                        then $Tuple4(0, 30000000, 80000000, 40000000)
+                                                                                        else if ((\"At8D6NFFpheCbvKVnjVoeLL84Eo8NZn6ovManxfLaFWL\" == $match1))
+                                                                                            then $Tuple4(0, 25000000, 80000000, 40000000)
+                                                                                            else if ((\"8LQW8f7P5d5PZM7GtZEBgaqRPGSzS3DfPuiXrURJ4AJS\" == $match1))
+                                                                                                then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                                else if ((\"474jTeYx2r2Va35794tCScAXWJG9hU2HcgxzMowaZUnu\" == $match1))
+                                                                                                    then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                                    else if ((\"5UYBPpq4WoU5n4MwpFkgJnW3Fq4B1u3ukpK33ik4QerR\" == $match1))
+                                                                                                        then $Tuple4(2000000, 30000000, 80000000, 50000000)
+                                                                                                        else if ((\"2thsACuHmzDMuNezPM32wg9a3BwUzBWDeSKakgz3cw21\" == $match1))
+                                                                                                            then $Tuple4(2000000, 40000000, 80000000, 100000000)
+                                                                                                            else if ((\"YiNbofFzC17jEHHCMwrRcpy9MrrjabMMLZxg8g5xmf7\" == $match1))
+                                                                                                                then $Tuple4(2000000, 30000000, 80000000, 80000000)
+                                                                                                                else $Tuple4(0, 20000000, 80000000, 80000000)
+                                    }
+                                    else throw(\"Unknown market\")
+        }
+    }
+
+
+func sum (size,data) = {
+    func fold (accum,next) =     if ((next >= size))
+        then accum
+        else (accum + data[next])
+
+    let $l = arr12
+    let $s = size($l)
+    let $acc0 = 0
+    func $f0_1 ($a,$i) =     if (($i >= $s))
+        then $a
+        else fold($a, $l[$i])
+
+    func $f0_2 ($a,$i) =     if (($i >= $s))
+        then $a
+        else throw(\"List size exceeds 12\")
+
+    $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+    }
+
+
+func getSetupTokens(marketAddress: Address) = split_4C(getStringValue(marketAddress, "setup_tokens"), ",")
+
+
+func getTokenPrice (marketAddress,assetIdStr) = {
+    let oracleStr = valueOrElse(getString(marketAddress, \"oracle\"), oracleAddressStr)
+    let oracleAddress = addressFromStringValue(oracleStr)
+    let stables = split_4C(valueOrElse(getString(marketAddress, \"setup_stablesIds\"), \"9wc3LXNA4TEBsXyKtoLE9mrbDD7WMHXvXrCjZvabLAsi,HGgabTqUS8WtVFUJzfmrTDMgEccJuZLBPhFgQFxvnsoW\"), \",\")
+    if ((indexOf(stables, assetIdStr) != unit))
+        then 1000000
+        else if (if (if ((assetIdStr == usdtIdStr))
+            then true
+            else (assetIdStr == usdcIdStr))
+            then true
+            else (assetIdStr == romeIdStr))
+            then 1000000
+            else if (containsElement(axlyLPs, assetIdStr))
+                then {
+                    let @ = invoke(axlyAddress, \"getShareAssetPriceREADONLY\", [assetIdStr], nil)
+                    if ($isInstanceOf(@, \"Int\"))
+                        then @
+                        else throw(($getType(@) + \" couldn't be cast to Int\"))
+                    }
+                else {
+                    let price = getIntegerValue(oracleAddress, (assetIdStr + \"_twap5B\"))
+                    price
+                    }
+    }
+
+
+func getAssetScale (assetIdStr) = {
+    let decimals = if ((assetIdStr == \"WAVES\"))
+        then 8
+        else value(assetInfo(fromBase58String(assetIdStr))).decimals
+    pow(10, 0, decimals, 0, 0, DOWN)
+    }
+
+
+func getLastRateHeight(marketAddress: Address) = valueOrElse(getInteger(marketAddress, "lastRateHeight"), 0)
+
+
+func getOutdatedTotalSupply(marketAddress: String, assetIdStr: String) = 
+    valueOrElse(getInteger(marketAddress, "total_supplied_" + assetIdStr), 0)
+
+
+func getOutdatedTotalBorrow(marketAddress: String, assetIdStr: String) =
+    valueOrElse(getInteger(marketAddress, "total_borrowed_" + assetIdStr), 0)
+
+
+func getOutdatedSRate(marketAddress: Address, assetIdStr: String) = 
+    valueOrElse(getInteger(marketAddress, (assetIdStr + "_sRate")), 0)
+
+
+func getOutdatedBRate(marketAddress: Address, assetIdStr: String) = 
+    valueOrElse(getInteger(marketAddress, (assetIdStr + "_bRate")), 0)
+
+
+func getOutdatedUr(outdatedTotalSupply: Int, outdatedTotalBorrow: Int, outdatedSRate: Int, outdatedBRate: Int) = {
+    let down = fraction(outdatedTotalSupply, outdatedSRate, Scale16)
+    if ((down == 0))
+        then 0
+        else fraction(Scale8, fraction(outdatedTotalBorrow, outdatedBRate, Scale16), down)
+    }
+
+
+func getRate(outdatedUr: Int, assetIdStr: String, marketStr: String) = {
+    let curve = getRateCurve(assetIdStr, marketStr)
+    (curve._1 + (if ((curve._3 >= outdatedUr))
+        then fraction(outdatedUr, curve._2, curve._3)
+        else (curve._2 + fraction((outdatedUr - curve._3), curve._4, (100000000 - curve._3)))))
+    }
+
+
+func getInterest(rate: Int) = max([fraction(rate, Scale8, yearBlocks), 1])
+
+
+func getAssetIndex (setupTokens,assetIdStr) = value(indexOf(setupTokens, assetIdStr))
+
+
+func getAssetParamters (marketParameters,assetIndex) = $Tuple3(marketParameters._1[assetIndex], marketParameters._2[assetIndex], marketParameters._3[assetIndex])
+
+
+func getMarketParameters (marketAddress,setupTokens) = {
+    let setupCf = split_4C(getStringValue(marketAddress, \"setup_ltvs\"), \",\")
+    let setupLt = split_4C(getStringValue(marketAddress, \"setup_lts\"), \",\")
+    let setupPenalty = split_4C(getStringValue(marketAddress, \"setup_penalties\"), \",\")
+    let tokensSize = size(setupTokens)
+    func fold (accum,next) =     if ((next >= tokensSize))
+        then accum
+        else $Tuple3((accum._1 :+ parseIntValue(setupCf[next])), (accum._2 :+ parseIntValue(setupLt[next])), (accum._3 :+ parseIntValue(setupPenalty[next])))
+
+    let $l = arr12
+    let $s = size($l)
+    let $acc0 = $Tuple3(nil, nil, nil)
+    func $f0_1 ($a,$i) =     if (($i >= $s))
+        then $a
+        else fold($a, $l[$i])
+
+    func $f0_2 ($a,$i) =     if (($i >= $s))
+        then $a
+        else throw(\"List size exceeds 12\")
+
+    $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+    }
+
+
+func getMaxSupply (marketAddress,assetIdStr) = parseIntValue(valueOrElse(getString(marketAddress, (\"setup_maxSupply_\" + assetIdStr)), \"0\"))
+
+
+func getActualSRate(lastRateHeight: Int, interest: Int, outdatedUr: Int, outdatedSRate: Int) = {
+    let lastSRate = max([outdatedSRate, Scale16])
+    let newSRate = lastSRate + (height - lastRateHeight) * fraction(interest, outdatedUr, Scale8) * (100 - reserveFund) / 100
+    newSRate
+}
+
+
+func getActualBRate(lastRateHeight: Int, interest: Int, outdatedBRate: Int) = {
+    let lastBRate = max([outdatedBRate, Scale16])
+    let newBRate = lastBRate + (height - lastRateHeight) * interest
+    newBRate
+}
+
+
+func getActualUr (actualSupply: Int, actualBorrow: Int) = if ((actualSupply == 0))
+    then 0
+    else fraction(actualBorrow, Scale8, actualSupply)
+
+
+func getActualAmount(outdatedAmount: Int, actualRate: Int) = fraction(outdatedAmount, actualRate, Scale16)
+
+
+func getInUsd (actualAmount,assetScale,price) = fraction(actualAmount, price, assetScale)
+
+
+func getSupplyApy (rate: Int, actualUr: Int) = {
+    let supplyRate = fraction(fraction(rate, 80, 100), actualUr, Scale8)
+    (toInt(pow((Scale16Big + fraction(toBigInt(supplyRate), Scale8Big, yearBlocksBig)), 16, yearBlocksBig, 0, 8, DOWN)) - Scale8)
+}
+
+
+func getBorrowApy (rate) = (toInt(pow((Scale16Big + fraction(toBigInt(rate), Scale8Big, yearBlocksBig)), 16, yearBlocksBig, 0, 8, DOWN)) - Scale8)
+
+
+func getWalletSupply(marketAddress: Address, assetIdStr: String, wallet: String, actualSRate: Int) = {
+    let outdatedWalletSupply = getInteger(marketAddress, ((wallet + \"_supplied_\") + assetIdStr)).valueOrElse(0)
+    getActualAmount(outdatedWalletSupply, actualSRate)
+}
+
+
+func getWalletBorrow (marketAddress,assetIdStr,wallet,actualBRate) = {
+    let outdatedWalletBorrow = valueOrElse(getInteger(marketAddress, ((wallet + \"_borrowed_\") + assetIdStr)), 0)
+    getActualAmount(outdatedWalletBorrow, actualBRate)
+    }
+
+
+func getDailyPercents(apy: Int, quantity: Int) = 
+    fraction(fraction((toInt(pow((Scale8Big + toBigInt(apy)), 8, (Scale16Big / yearBlocksBig), 16, 16, DOWN)) - Scale16), dayBlocks, Scale8), quantity, Scale8)
+
+
+func getAccountHealth (totalWalletBorrowLimitInUsd,totalWalletBorrowUsageInUsd) = if ((totalWalletBorrowLimitInUsd == 0))
+    then Scale8
+    else (Scale8 - fraction(totalWalletBorrowUsageInUsd, Scale8, totalWalletBorrowLimitInUsd))
+
+
+func getNetApy (totalWalletSupplyInUsd,totalWalletBorrowInUsd,totalWalletMarginInUsd) = if ((totalWalletMarginInUsd == 0))
+    then 0
+    else if ((totalWalletMarginInUsd > 0))
+        then fraction(totalWalletMarginInUsd, Scale8, totalWalletSupplyInUsd)
+        else fraction(totalWalletMarginInUsd, Scale8, totalWalletBorrowInUsd)
+
+
+func assetToJson (assetIdStr: String, qty: Int) = {
+  let (decimals, name) = if (assetIdStr == Waves) then (8, "WAVES") else {
+    let asset = value(assetInfo(fromBase58String(assetIdStr)))
+    (asset.decimals, asset.name)
+  }
+  "{\"quantity\":" + toString(qty) + ",\"decimals\":" + toString(decimals) + \",\\\"name\\\":\\\"\") + name) + \"\\\",\\\"id\\\":\\\"\") + assetIdStr) + \"\\\"}\")
+}
+
+
+func amountToDecimal(amount: Int, decimals: Int) = 
+    "{\"quantity\":" + toString(amount) + ",\"decimals\":" + toString(decimals) + ",\"name\":\"\",\"id\":\"\"}"
+
+
+func getMarketJson (marketIndex: Int, wallet: String, debug: Boolean) = {
+    let marketStr = getStringValue("market_" + toString(marketIndex))
+    let marketAddress = addressFromStringValue(marketStr)
+    let marketName = getStringValue("market_name_" + marketStr)
+    let active = valueOrElse(getBoolean(marketAddress, "setup_active"), true)
+    let setupTokens = getSetupTokens(marketAddress)
+    let assetsCount = size(setupTokens)
+    let lastRateHeight = getLastRateHeight(marketAddress)
+
+    func assetsFold (accum: (Int, Int, Int, List[String]), next: Int) =
+        if ((next >= assetsCount)) then accum else {
+            let assetIdStr = setupTokens[next]
+            let price = getTokenPrice(marketAddress, assetIdStr)
+            let assetScale = getAssetScale(assetIdStr)
+            let outdatedTotalSupply = getOutdatedTotalSupply(marketAddress, assetIdStr)
+            let outdatedTotalBorrow = getOutdatedTotalBorrow(marketAddress, assetIdStr)
+            let outdatedSRate = getOutdatedSRate(marketAddress, assetIdStr)
+            let outdatedBRate = getOutdatedBRate(marketAddress, assetIdStr)
+            let outdatedUr = getOutdatedUr(outdatedTotalSupply, outdatedTotalBorrow, outdatedSRate, outdatedBRate)
+            let rate = getRate(outdatedUr, assetIdStr, marketStr)
+            let interest = getInterest(rate)
+            let sRate = getActualSRate(lastRateHeight, interest, outdatedUr, outdatedSRate)
+            let bRate = getActualBRate(lastRateHeight, interest, outdatedBRate)
+            let supply = getActualAmount(outdatedTotalSupply, sRate)
+            let borrow = getActualAmount(outdatedTotalBorrow, bRate)
+            let supplyInUsd = getInUsd(supply, assetScale, price)
+            let borrowInUsd = getInUsd(borrow, assetScale, price)
+            let reserves = (supply - borrow)
+            let reservesInUsd = getInUsd(reserves, assetScale, price)
+            let ur = getActualUr(supply, borrow)
+            let supplyApy = getSupplyApy(rate, ur)
+            let borrowApy = getBorrowApy(rate)
+            let marketAssetJson = (((((((((((((((((((((((((\"{\" + 
+                \"\\\"supply\\\":\") + assetToJson(assetIdStr, supply)) + 
+                \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, supplyInUsd)) + 
+                \",\\\"borrow\\\":\") + assetToJson(assetIdStr, borrow)) + 
+                \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, borrowInUsd)) + 
+                \",\\\"reserves\\\":\") + assetToJson(assetIdStr, reserves)) + 
+                \",\\\"reservesInUsd\\\":\") + assetToJson(usdtIdStr, reservesInUsd)) + 
+                \",\\\"price\\\":\") + assetToJson(usdtIdStr, price)) + 
+                \",\\\"supplyApy\\\":\") + amountToDecimal(supplyApy, 8)) + 
+                \",\\\"borrowApy\\\":\") + amountToDecimal(borrowApy, 8)) + 
+                \",\\\"utilizationRatio\\\":\") + amountToDecimal(ur, 8)) + 
+                \",\\\"sRate\\\":\") + amountToDecimal(sRate, 16)) + 
+                \",\\\"bRate\\\":\") + amountToDecimal(bRate, 16)) + 
+            \"}\")
+            ((accum._1 + supplyInUsd), (accum._2 + borrowInUsd), (accum._3 + reservesInUsd), (accum._4 :+ marketAssetJson))
+        }
+
+    let (supplyInUsd, borrowInUsd, reservesInUsd, marketAssetsJson) = FOLD<12>(arr12, (0, 0, 0, nil), assetsFold)
+
+    let marketsCount = getIntegerValue(\"markets\")
+
+    func marketsFold (accum: List[String], next: Int) =
+        if ((next >= marketsCount)) then accum else {
+            let currentMarketAddressStr = getStringValue((\"market_\" + toString(next)))
+            let currentMarketName = getStringValue((\"market_name_\" + currentMarketAddressStr))
+            let simpleJson = ((((((((((\"{\" + \"\\\"index\\\":\") + toString(next)) + \",\\\"name\\\":\\\"\") + currentMarketName) + \"\\\"\") + \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, 0)) + \",\\\"accountHealth\\\":\") + amountToDecimal(0, 8)) + \"}\")
+            if ((wallet == \"\")) then (accum :+ simpleJson) else {
+                    let currentMarketAddress = addressFromStringValue(currentMarketAddressStr)
+                    let currentSetupTokens = getSetupTokens(currentMarketAddress)
+                    let currentAssetsCount = size(currentSetupTokens)
+                    let currentMarketShortName = getStringValue((\"market_shortname_\" + currentMarketAddressStr))
+                    let setupCf = split_4C(getStringValue(currentMarketAddress, \"setup_ltvs\"), \",\")
+                    let setupLt = split_4C(getStringValue(currentMarketAddress, \"setup_lts\"), \",\")
+                    let currentLastRateHeight = getLastRateHeight(currentMarketAddress)
+
+                    func marketAssetsFold(accum: (Int, Int, Int, Int), next: Int) =
+                        if ((next >= currentAssetsCount)) then accum else {
+                            let assetIdStr = currentSetupTokens[next]
+                            let cf = parseIntValue(setupCf[next])
+                            let lt = parseIntValue(setupLt[next])
+                            let price = getTokenPrice(marketAddress, assetIdStr)
+                            let assetScale = getAssetScale(assetIdStr)
+                            let outdatedTotalSupply = getOutdatedTotalSupply(currentMarketAddress, assetIdStr)
+                            let outdatedTotalBorrow = getOutdatedTotalBorrow(currentMarketAddress, assetIdStr)
+                            let outdatedSRate = getOutdatedSRate(currentMarketAddress, assetIdStr)
+                            let outdatedBRate = getOutdatedBRate(currentMarketAddress, assetIdStr)
+                            let outdatedUr = getOutdatedUr(outdatedTotalSupply, outdatedTotalBorrow, outdatedSRate, outdatedBRate)
+                            let rate = getRate(outdatedUr, assetIdStr, marketStr)
+                            let interest = getInterest(rate)
+                            let sRate = getActualSRate(currentLastRateHeight, interest, outdatedUr, outdatedSRate)
+                            let bRate = getActualBRate(currentLastRateHeight, interest, outdatedBRate)
+                            let walletSupply = getWalletSupply(currentMarketAddress, assetIdStr, wallet, sRate)
+                            let walletSupplyInUsd = getInUsd(walletSupply, assetScale, price)
+                            let walletBorrow = getWalletBorrow(currentMarketAddress, assetIdStr, wallet, bRate)
+                            let walletBorrowInUsd = getInUsd(walletBorrow, assetScale, price)
+                            let walletBorrowLimitInUsd = fraction(walletSupplyInUsd, cf, Scale8)
+                            let walletBorrowUsageInUsd = fraction(walletBorrowInUsd, Scale8, lt)
+                            ((accum._1 + walletSupplyInUsd), (accum._2 + walletBorrowInUsd), (accum._3 + walletBorrowLimitInUsd), (accum._4 + walletBorrowUsageInUsd))
+                        }
+
+                    let (totalWalletSupplyInUsd, totalWalletBorrowInUsd, totalWalletBorrowLimitInUsd, totalWalletBorrowUsageInUsd) = FOLD<12>(arr12, (0, 0, 0, 0), marketAssetsFold)
+
+                    let accountHealth = getAccountHealth(totalWalletBorrowLimitInUsd, totalWalletBorrowUsageInUsd)
+                    let fullJson = ((((((((((((\"{\" + \"\\\"index\\\":\") + toString(next)) + \",\\\"name\\\":\\\"\") + currentMarketShortName) + \"\\\"\") + \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletSupplyInUsd)) + \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletBorrowInUsd)) + \",\\\"accountHealth\\\":\") + amountToDecimal(accountHealth, 8)) + \"}\")
+                    (accum :+ fullJson)
+                }
+        }
+
+    let marketsJson = FOLD<12>(arr12, [], marketsFold)
+    let json = (((((((((((((((((((((((\"{\" + \"\\\"index\\\":\") + toString(marketIndex)) + \",\\\"name\\\":\\\"\") + marketName) + \"\\\"\") + \",\\\"address\\\":\\\"\") + marketStr) + \"\\\"\") + \",\\\"active\\\":\") + toString(active)) + \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, supplyInUsd)) + \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, borrowInUsd)) + \",\\\"reservesInUsd\\\":\") + assetToJson(usdtIdStr, reservesInUsd)) + \",\\\"assets\\\":[\") + makeString_11C(marketAssetsJson, \",\")) + \"]\") + \",\\\"markets\\\":[\") + makeString_11C(marketsJson, \",\")) + \"]\") + \"}\")
+    if (debug)
+        then throw(json)
+        else json
+}
+
+
+func getMenuJson (debug) = {
+    let marketsCount = getIntegerValue(\"markets\")
+    func marketsFold (accum,next) =     if ((next >= marketsCount))
+        then accum
+        else {
+            let marketStr = getStringValue((\"market_\" + toString(next)))
+            let marketAddress = addressFromStringValue(marketStr)
+            let setupTokens = getSetupTokens(marketAddress)
+            let assetsCount = size(setupTokens)
+            let lastRateHeight = getLastRateHeight(marketAddress)
+            func assetsFold (accum,next) =             if ((next >= assetsCount))
+                then accum
+                else {
+                    let assetIdStr = setupTokens[next]
+                    let price = getTokenPrice(marketAddress, assetIdStr)
+                    let assetScale = getAssetScale(assetIdStr)
+                    let outdatedTotalSupply = getOutdatedTotalSupply(marketAddress, assetIdStr)
+                    let outdatedTotalBorrow = getOutdatedTotalBorrow(marketAddress, assetIdStr)
+                    let outdatedSRate = getOutdatedSRate(marketAddress, assetIdStr)
+                    let outdatedBRate = getOutdatedBRate(marketAddress, assetIdStr)
+                    let outdatedUr = getOutdatedUr(outdatedTotalSupply, outdatedTotalBorrow, outdatedSRate, outdatedBRate)
+                    let rate = getRate(outdatedUr, assetIdStr, marketStr)
+                    let interest = getInterest(rate)
+                    let sRate = getActualSRate(lastRateHeight, interest, outdatedUr, outdatedSRate)
+                    let bRate = getActualBRate(lastRateHeight, interest, outdatedBRate)
+                    let supply = getActualAmount(outdatedTotalSupply, sRate)
+                    let borrow = getActualAmount(outdatedTotalBorrow, bRate)
+                    let supplyInUsd = getInUsd(supply, assetScale, price)
+                    let borrowInUsd = getInUsd(borrow, assetScale, price)
+                    let reserves = (supply - borrow)
+                    let reservesInUsd = getInUsd(reserves, assetScale, price)
+                    let marketAssetJson = (((((((((\"{\" + \"\\\"asset\\\":\") + assetToJson(assetIdStr, 0)) + \",\\\"price\\\":\") + assetToJson(usdtIdStr, price)) + \",\\\"sRate\\\":\") + amountToDecimal(sRate, 16)) + \",\\\"bRate\\\":\") + amountToDecimal(bRate, 16)) + \"}\")
+                    $Tuple4((accum._1 + supplyInUsd), (accum._2 + borrowInUsd), (accum._3 + reservesInUsd), (accum._4 :+ marketAssetJson))
+                    }
+
+            let $t02673026838 = {
+                let $l = arr12
+                let $s = size($l)
+                let $acc0 = $Tuple4(0, 0, 0, nil)
+                func $f0_1 ($a,$i) =                 if (($i >= $s))
+                    then $a
+                    else assetsFold($a, $l[$i])
+
+                func $f0_2 ($a,$i) =                 if (($i >= $s))
+                    then $a
+                    else throw(\"List size exceeds 12\")
+
+                $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+                }
+            let supplyInUsd = $t02673026838._1
+            let borrowInUsd = $t02673026838._2
+            let reservesInUsd = $t02673026838._3
+            let marketAssetsJson = $t02673026838._4
+            let marketJson = (((((((\"{\" + \"\\\"address\\\":\\\"\") + marketStr) + \"\\\"\") + \",\\\"assets\\\":[\") + makeString_11C(marketAssetsJson, \",\")) + \"]\") + \"}\")
+            $Tuple4((accum._1 + supplyInUsd), (accum._2 + borrowInUsd), (accum._3 + reservesInUsd), (accum._4 :+ marketJson))
+            }
+
+    let $t02722927348 = {
+        let $l = arr12
+        let $s = size($l)
+        let $acc0 = $Tuple4(0, 0, 0, nil)
+        func $f0_1 ($a,$i) =         if (($i >= $s))
+            then $a
+            else marketsFold($a, $l[$i])
+
+        func $f0_2 ($a,$i) =         if (($i >= $s))
+            then $a
+            else throw(\"List size exceeds 12\")
+
+        $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+        }
+    let totalSupplyInUsd = $t02722927348._1
+    let totalBorrowInUsd = $t02722927348._2
+    let totalReservesInUsd = $t02722927348._3
+    let marketsJson = $t02722927348._4
+    let json = ((((((((((\"{\" + \"\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, totalSupplyInUsd)) + \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, totalBorrowInUsd)) + \",\\\"reservesInUsd\\\":\") + assetToJson(usdtIdStr, totalReservesInUsd)) + \",\\\"markets\\\":[\") + makeString_11C(marketsJson, \",\")) + \"]\") + \"}\")
+    if (debug)
+        then throw(json)
+        else json
+    }
+
+
+func getWalletJson (marketIndex,wallet,debug) = {
+    let marketStr = getStringValue((\"market_\" + toString(marketIndex)))
+    let marketAddress = addressFromStringValue(marketStr)
+    let marketName = getStringValue((\"market_name_\" + marketStr))
+    let marketsCount = getIntegerValue(\"markets\")
+    func marketsFold (accum,next) =     if ((next >= marketsCount))
+        then accum
+        else {
+            let currentMarketAddressStr = getStringValue((\"market_\" + toString(next)))
+            let currentMarketName = getStringValue((\"market_name_\" + currentMarketAddressStr))
+            let currentMarketAddress = addressFromStringValue(currentMarketAddressStr)
+            let currentSetupTokens = getSetupTokens(currentMarketAddress)
+            let currentAssetsCount = size(currentSetupTokens)
+            let currentMarketShortName = getStringValue((\"market_shortname_\" + currentMarketAddressStr))
+            let setupCf = split_4C(getStringValue(currentMarketAddress, \"setup_ltvs\"), \",\")
+            let setupLt = split_4C(getStringValue(currentMarketAddress, \"setup_lts\"), \",\")
+            let currentLastRateHeight = getLastRateHeight(currentMarketAddress)
+            func marketAssetsFold (accum,next) =             if ((next >= currentAssetsCount))
+                then accum
+                else {
+                    let assetIdStr = currentSetupTokens[next]
+                    let cf = parseIntValue(setupCf[next])
+                    let lt = parseIntValue(setupLt[next])
+                    let price = getTokenPrice(marketAddress, assetIdStr)
+                    let assetScale = getAssetScale(assetIdStr)
+                    let outdatedTotalSupply = getOutdatedTotalSupply(currentMarketAddress, assetIdStr)
+                    let outdatedTotalBorrow = getOutdatedTotalBorrow(currentMarketAddress, assetIdStr)
+                    let outdatedSRate = getOutdatedSRate(currentMarketAddress, assetIdStr)
+                    let outdatedBRate = getOutdatedBRate(currentMarketAddress, assetIdStr)
+                    let outdatedUr = getOutdatedUr(outdatedTotalSupply, outdatedTotalBorrow, outdatedSRate, outdatedBRate)
+                    let rate = getRate(outdatedUr, assetIdStr, marketStr)
+                    let interest = getInterest(rate)
+                    let sRate = getActualSRate(currentLastRateHeight, interest, outdatedUr, outdatedSRate)
+                    let bRate = getActualBRate(currentLastRateHeight, interest, outdatedBRate)
+                    let supply = getActualAmount(outdatedTotalSupply, sRate)
+                    let borrow = getActualAmount(outdatedTotalBorrow, bRate)
+                    let ur = getActualUr(supply, borrow)
+                    let supplyApy = getSupplyApy(rate, ur)
+                    let borrowApy = getBorrowApy(rate)
+                    let walletSupply = getWalletSupply(currentMarketAddress, assetIdStr, wallet, sRate)
+                    let walletSupplyInUsd = getInUsd(walletSupply, assetScale, price)
+                    let walletBorrow = getWalletBorrow(currentMarketAddress, assetIdStr, wallet, bRate)
+                    let walletBorrowInUsd = getInUsd(walletBorrow, assetScale, price)
+                    let walletBorrowLimitInUsd = fraction(walletSupplyInUsd, cf, Scale8)
+                    let walletBorrowUsageInUsd = fraction(walletBorrowInUsd, Scale8, lt)
+                    let walletDailyIncome = getDailyPercents(supplyApy, walletSupply)
+                    let walletDailyIncomeInUsd = getInUsd(walletDailyIncome, assetScale, price)
+                    let walletDailyLoanInterest = getDailyPercents(borrowApy, walletBorrow)
+                    let walletDailyLoanInterestInUsd = getInUsd(walletDailyLoanInterest, assetScale, price)
+                    let walletMarginInUsd = (fraction(walletSupplyInUsd, supplyApy, Scale8) - fraction(walletBorrowInUsd, borrowApy, Scale8))
+                    $Tuple7((accum._1 + walletSupplyInUsd), (accum._2 + walletBorrowInUsd), (accum._3 + walletBorrowLimitInUsd), (accum._4 + walletBorrowUsageInUsd), (accum._5 + walletDailyIncomeInUsd), (accum._6 + walletDailyLoanInterestInUsd), (accum._7 + walletMarginInUsd))
+                    }
+
+            let $t03217832533 = {
+                let $l = arr12
+                let $s = size($l)
+                let $acc0 = $Tuple7(0, 0, 0, 0, 0, 0, 0)
+                func $f0_1 ($a,$i) =                 if (($i >= $s))
+                    then $a
+                    else marketAssetsFold($a, $l[$i])
+
+                func $f0_2 ($a,$i) =                 if (($i >= $s))
+                    then $a
+                    else throw(\"List size exceeds 12\")
+
+                $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+                }
+            let totalWalletSupplyInUsd = $t03217832533._1
+            let totalWalletBorrowInUsd = $t03217832533._2
+            let totalWalletBorrowLimitInUsd = $t03217832533._3
+            let totalWalletBorrowUsageInUsd = $t03217832533._4
+            let totalWalletDailyIncomeInUsd = $t03217832533._5
+            let totalWalletDailyLoanInterestInUsd = $t03217832533._6
+            let totalWalletMarginInUsd = $t03217832533._7
+            let totalWalletBadDebtInUsd = if ((totalWalletBorrowInUsd > totalWalletSupplyInUsd))
+                then (totalWalletBorrowInUsd - totalWalletSupplyInUsd)
+                else 0
+            let accountHealth = getAccountHealth(totalWalletBorrowLimitInUsd, totalWalletBorrowUsageInUsd)
+            let netApy = getNetApy(totalWalletSupplyInUsd, totalWalletBorrowInUsd, totalWalletMarginInUsd)
+            let marketsJson = ((((((((((((\"{\" + \"\\\"index\\\":\") + toString(next)) + \",\\\"name\\\":\\\"\") + currentMarketShortName) + \"\\\"\") + \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletSupplyInUsd)) + \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletBorrowInUsd)) + \",\\\"accountHealth\\\":\") + amountToDecimal(accountHealth, 8)) + \"}\")
+            func walletAssetsFold (accum,next) =             if ((next >= currentAssetsCount))
+                then accum
+                else {
+                    let assetIdStr = currentSetupTokens[next]
+                    let price = getTokenPrice(marketAddress, assetIdStr)
+                    let assetScale = getAssetScale(assetIdStr)
+                    let outdatedTotalSupply = getOutdatedTotalSupply(currentMarketAddress, assetIdStr)
+                    let outdatedTotalBorrow = getOutdatedTotalBorrow(currentMarketAddress, assetIdStr)
+                    let outdatedSRate = getOutdatedSRate(currentMarketAddress, assetIdStr)
+                    let outdatedBRate = getOutdatedBRate(currentMarketAddress, assetIdStr)
+                    let outdatedUr = getOutdatedUr(outdatedTotalSupply, outdatedTotalBorrow, outdatedSRate, outdatedBRate)
+                    let rate = getRate(outdatedUr, assetIdStr, marketStr)
+                    let interest = getInterest(rate)
+                    let sRate = getActualSRate(currentLastRateHeight, interest, outdatedUr, outdatedSRate)
+                    let bRate = getActualBRate(currentLastRateHeight, interest, outdatedBRate)
+                    let supply = getActualAmount(outdatedTotalSupply, sRate)
+                    let borrow = getActualAmount(outdatedTotalBorrow, bRate)
+                    let ur = getActualUr(supply, borrow)
+                    let supplyApy = getSupplyApy(rate, ur)
+                    let borrowApy = getBorrowApy(rate)
+                    let walletSupply = getWalletSupply(currentMarketAddress, assetIdStr, wallet, sRate)
+                    let walletSupplyInUsd = getInUsd(walletSupply, assetScale, price)
+                    let walletBorrow = getWalletBorrow(currentMarketAddress, assetIdStr, wallet, bRate)
+                    let walletBorrowInUsd = getInUsd(walletBorrow, assetScale, price)
+                    let walletDailyIncome = getDailyPercents(supplyApy, walletSupply)
+                    let walletDailyIncomeInUsd = getInUsd(walletDailyIncome, assetScale, price)
+                    let walletDailyLoanInterest = getDailyPercents(borrowApy, walletBorrow)
+                    let walletDailyLoanInterestInUsd = getInUsd(walletDailyLoanInterest, assetScale, price)
+                    let supplyAssetsJson = (((((((((((((\"{\" + \"\\\"amount\\\":\") + assetToJson(assetIdStr, walletSupply)) + \",\\\"amountInUsd\\\":\") + assetToJson(usdtIdStr, walletSupplyInUsd)) + \",\\\"price\\\":\") + assetToJson(usdtIdStr, price)) + \",\\\"apy\\\":\") + amountToDecimal(supplyApy, 8)) + \",\\\"dailyPercents\\\":\") + assetToJson(assetIdStr, walletDailyIncome)) + \",\\\"dailyPercentsInUsd\\\":\") + assetToJson(usdtIdStr, walletDailyIncomeInUsd)) + \"}\")
+                    let borrowAssetsJson = (((((((((((((\"{\" + \"\\\"amount\\\":\") + assetToJson(assetIdStr, walletBorrow)) + \",\\\"amountInUsd\\\":\") + assetToJson(usdtIdStr, walletBorrowInUsd)) + \",\\\"price\\\":\") + assetToJson(usdtIdStr, price)) + \",\\\"apy\\\":\") + amountToDecimal(borrowApy, 8)) + \",\\\"dailyPercents\\\":\") + assetToJson(assetIdStr, walletDailyLoanInterest)) + \",\\\"dailyPercentsInUsd\\\":\") + assetToJson(usdtIdStr, walletDailyLoanInterestInUsd)) + \"}\")
+                    $Tuple2((accum._1 :+ supplyAssetsJson), (accum._2 :+ borrowAssetsJson))
+                    }
+
+            let $t03693537021 = {
+                let $l = arr12
+                let $s = size($l)
+                let $acc0 = $Tuple2(nil, nil)
+                func $f1_1 ($a,$i) =                 if (($i >= $s))
+                    then $a
+                    else walletAssetsFold($a, $l[$i])
+
+                func $f1_2 ($a,$i) =                 if (($i >= $s))
+                    then $a
+                    else throw(\"List size exceeds 12\")
+
+                $f1_2($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($f1_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+                }
+            let supplyAssetsJson = $t03693537021._1
+            let borrowAssetsJson = $t03693537021._2
+            if ((marketIndex == next))
+                then $Tuple15((accum._1 + totalWalletSupplyInUsd), (accum._2 + totalWalletBorrowInUsd), (accum._3 + totalWalletBadDebtInUsd), (accum._4 + totalWalletDailyIncomeInUsd), (accum._5 + totalWalletDailyLoanInterestInUsd), totalWalletSupplyInUsd, totalWalletBorrowInUsd, totalWalletBadDebtInUsd, totalWalletDailyIncomeInUsd, totalWalletDailyLoanInterestInUsd, accountHealth, netApy, (accum._13 :+ marketsJson), supplyAssetsJson, borrowAssetsJson)
+                else $Tuple15((accum._1 + totalWalletSupplyInUsd), (accum._2 + totalWalletBorrowInUsd), (accum._3 + totalWalletBadDebtInUsd), (accum._4 + totalWalletDailyIncomeInUsd), (accum._5 + totalWalletDailyLoanInterestInUsd), accum._6, accum._7, accum._8, accum._9, accum._10, accum._11, accum._12, (accum._13 :+ marketsJson), accum._14, accum._15)
+            }
+
+    let $t03847838962 = {
+        let $l = arr12
+        let $s = size($l)
+        let $acc0 = $Tuple15(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, nil, nil, nil)
+        func $f0_1 ($a,$i) =         if (($i >= $s))
+            then $a
+            else marketsFold($a, $l[$i])
+
+        func $f0_2 ($a,$i) =         if (($i >= $s))
+            then $a
+            else throw(\"List size exceeds 12\")
+
+        $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+        }
+    let totalWalletSupplyInUsd = $t03847838962._1
+    let totalWalletBorrowInUsd = $t03847838962._2
+    let totalWalletBadDebtInUsd = $t03847838962._3
+    let totalWalletDailyIncomeInUsd = $t03847838962._4
+    let totalWalletDailyLoanInterestInUsd = $t03847838962._5
+    let walletSupplyInUsd = $t03847838962._6
+    let walletBorrowInUsd = $t03847838962._7
+    let walletBadDebtInUsd = $t03847838962._8
+    let walletDailyIncomeInUsd = $t03847838962._9
+    let walletDailyLoanInterestInUsd = $t03847838962._10
+    let walletAccountHealth = $t03847838962._11
+    let walletNetApy = $t03847838962._12
+    let marketsJson = $t03847838962._13
+    let supplyAssetsJson = $t03847838962._14
+    let borrowAssetsJson = $t03847838962._15
+    let json = (((((((((((((((((((((((((((((((((((((((\"{\" + \"\\\"marketIndex\\\":\") + toString(marketIndex)) + \",\\\"name\\\":\\\"\") + marketName) + \"\\\"\") + \",\\\"totalSupplyInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletSupplyInUsd)) + \",\\\"totalBorrowInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletBorrowInUsd)) + \",\\\"totalBadDebtInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletBadDebtInUsd)) + \",\\\"totalDailyIncomeInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletDailyIncomeInUsd)) + \",\\\"totalDailyLoanInterestInUsd\\\":\") + assetToJson(usdtIdStr, totalWalletDailyLoanInterestInUsd)) + \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, walletSupplyInUsd)) + \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, walletBorrowInUsd)) + \",\\\"badDebtInUsd\\\":\") + assetToJson(usdtIdStr, walletBadDebtInUsd)) + \",\\\"dailyIncomeInUsd\\\":\") + assetToJson(usdtIdStr, walletDailyIncomeInUsd)) + \",\\\"dailyLoanInterestInUsd\\\":\") + assetToJson(usdtIdStr, walletDailyLoanInterestInUsd)) + \",\\\"accountHealth\\\":\") + amountToDecimal(walletAccountHealth, 8)) + \",\\\"netApy\\\":\") + amountToDecimal(walletNetApy, 8)) + \",\\\"supplyAssets\\\":[\") + makeString_11C(supplyAssetsJson, \",\")) + \"]\") + \",\\\"borrowAssets\\\":[\") + makeString_11C(borrowAssetsJson, \",\")) + \"]\") + \",\\\"markets\\\":[\") + makeString_11C(marketsJson, \",\")) + \"]\") + \"}\")
+    if (debug)
+        then throw(json)
+        else json
+    }
+
+
+func getWalletOperationsJson (marketIndex,assetIdStr,wallet,debug) = {
+    let marketStr = getStringValue((\"market_\" + toString(marketIndex)))
+    let marketAddress = addressFromStringValue(marketStr)
+    let marketName = getStringValue((\"market_name_\" + marketStr))
+    let active = valueOrElse(getBoolean(marketAddress, \"setup_active\"), true)
+    let setupTokens = getSetupTokens(marketAddress)
+    let setupCf = split_4C(getStringValue(marketAddress, \"setup_ltvs\"), \",\")
+    let setupLt = split_4C(getStringValue(marketAddress, \"setup_lts\"), \",\")
+    let setupPenalty = split_4C(getStringValue(marketAddress, \"setup_penalties\"), \",\")
+    let assetIndex = getAssetIndex(setupTokens, assetIdStr)
+    let cf = parseIntValue(setupCf[assetIndex])
+    let lt = parseIntValue(setupLt[assetIndex])
+    let penalty = parseIntValue(setupPenalty[assetIndex])
+    let assetsCount = size(setupTokens)
+    let lastRateHeight = getLastRateHeight(marketAddress)
+    let price = getTokenPrice(marketAddress, assetIdStr)
+    let assetScale = getAssetScale(assetIdStr)
+    let outdatedTotalSupply = getOutdatedTotalSupply(marketAddress, assetIdStr)
+    let outdatedTotalBorrow = getOutdatedTotalBorrow(marketAddress, assetIdStr)
+    let outdatedSRate = getOutdatedSRate(marketAddress, assetIdStr)
+    let outdatedBRate = getOutdatedBRate(marketAddress, assetIdStr)
+    let outdatedUr = getOutdatedUr(outdatedTotalSupply, outdatedTotalBorrow, outdatedSRate, outdatedBRate)
+    let rate = getRate(outdatedUr, assetIdStr, marketStr)
+    let interest = getInterest(rate)
+    let sRate = getActualSRate(lastRateHeight, interest, outdatedUr, outdatedSRate)
+    let bRate = getActualBRate(lastRateHeight, interest, outdatedBRate)
+    let supply = getActualAmount(outdatedTotalSupply, sRate)
+    let borrow = getActualAmount(outdatedTotalBorrow, bRate)
+    let supplyInUsd = getInUsd(supply, assetScale, price)
+    let borrowInUsd = getInUsd(borrow, assetScale, price)
+    let reserves = (supply - borrow)
+    let reservesInUsd = getInUsd(reserves, assetScale, price)
+    let ur = getActualUr(supply, borrow)
+    let supplyApy = getSupplyApy(rate, ur)
+    let borrowApy = getBorrowApy(rate)
+    let maxSupply = getMaxSupply(marketAddress, assetIdStr)
+    let walletSupply = getWalletSupply(marketAddress, assetIdStr, wallet, sRate)
+    let walletSupplyInUsd = getInUsd(walletSupply, assetScale, price)
+    let walletDailyIncome = getDailyPercents(supplyApy, walletSupply)
+    let walletDailyIncomeInUsd = getInUsd(walletDailyIncome, assetScale, price)
+    let walletBorrow = getWalletBorrow(marketAddress, assetIdStr, wallet, bRate)
+    let walletBorrowInUsd = getInUsd(walletBorrow, assetScale, price)
+    let walletDailyLoanPercents = getDailyPercents(borrowApy, walletBorrow)
+    let walletDailyLoanPercentsInUsd = getInUsd(walletDailyLoanPercents, assetScale, price)
+    func assetsFold (accum,next) =     if ((next >= assetsCount))
+        then accum
+        else {
+            let currentAssetIdStr = setupTokens[next]
+            let currentCf = parseIntValue(setupCf[next])
+            let currentLt = parseIntValue(setupLt[next])
+            let currentPrice = getTokenPrice(marketAddress, currentAssetIdStr)
+            let currentAssetScale = getAssetScale(currentAssetIdStr)
+            let currentOutdatedTotalSupply = getOutdatedTotalSupply(marketAddress, currentAssetIdStr)
+            let currentOutdatedTotalBorrow = getOutdatedTotalBorrow(marketAddress, currentAssetIdStr)
+            let currentOutdatedSRate = getOutdatedSRate(marketAddress, currentAssetIdStr)
+            let currentOutdatedBRate = getOutdatedBRate(marketAddress, currentAssetIdStr)
+            let currentOutdatedUr = getOutdatedUr(currentOutdatedTotalSupply, currentOutdatedTotalBorrow, currentOutdatedSRate, currentOutdatedBRate)
+            let currentRate = getRate(currentOutdatedUr, currentAssetIdStr, marketStr)
+            let currentInterest = getInterest(currentRate)
+            let currentSRate = getActualSRate(lastRateHeight, currentInterest, currentOutdatedUr, currentOutdatedSRate)
+            let currentBRate = getActualBRate(lastRateHeight, currentInterest, currentOutdatedBRate)
+            let currentSupply = getActualAmount(currentOutdatedTotalSupply, sRate)
+            let currentBorrow = getActualAmount(currentOutdatedTotalBorrow, bRate)
+            let currentUr = getActualUr(currentSupply, currentBorrow)
+            let currentSupplyApy = getSupplyApy(currentRate, currentUr)
+            let currentBorrowApy = getBorrowApy(currentRate)
+            let currentWalletSupply = getWalletSupply(marketAddress, currentAssetIdStr, wallet, currentSRate)
+            let currentWalletSupplyInUsd = getInUsd(currentWalletSupply, currentAssetScale, currentPrice)
+            let currentWalletBorrow = getWalletBorrow(marketAddress, currentAssetIdStr, wallet, currentBRate)
+            let currentWalletBorrowInUsd = getInUsd(currentWalletBorrow, currentAssetScale, currentPrice)
+            let currentWalletBorrowLimitInUsd = fraction(currentWalletSupplyInUsd, currentCf, Scale8)
+            let currentWalletBorrowUsageInUsd = fraction(currentWalletBorrowInUsd, Scale8, currentLt)
+            let walletMarginInUsd = (fraction(currentWalletSupplyInUsd, currentSupplyApy, Scale8) - fraction(currentWalletBorrowInUsd, currentBorrowApy, Scale8))
+            $Tuple5((accum._1 + currentWalletSupplyInUsd), (accum._2 + currentWalletBorrowInUsd), (accum._3 + currentWalletBorrowLimitInUsd), (accum._4 + currentWalletBorrowUsageInUsd), (accum._5 + walletMarginInUsd))
+            }
+
+    let $t04597346154 = {
+        let $l = arr12
+        let $s = size($l)
+        let $acc0 = $Tuple5(0, 0, 0, 0, 0)
+        func $f0_1 ($a,$i) =         if (($i >= $s))
+            then $a
+            else assetsFold($a, $l[$i])
+
+        func $f0_2 ($a,$i) =         if (($i >= $s))
+            then $a
+            else throw(\"List size exceeds 12\")
+
+        $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+        }
+    let totalWalletSupplyInUsd = $t04597346154._1
+    let totalWalletBorrowInUsd = $t04597346154._2
+    let totalWalletBorrowLimitInUsd = $t04597346154._3
+    let totalWalletBorrowUsageInUsd = $t04597346154._4
+    let totalWalletMarginInUsd = $t04597346154._5
+    let accountHealth = getAccountHealth(totalWalletBorrowLimitInUsd, totalWalletBorrowUsageInUsd)
+    let netApy = getNetApy(totalWalletSupplyInUsd, totalWalletBorrowInUsd, totalWalletMarginInUsd)
+    let json = (((((((((((((((((((((((((((((((((((((((((((((((((((((((((\"{\" + \"\\\"marketIndex\\\":\") + toString(marketIndex)) + \",\\\"marketName\\\":\\\"\") + marketName) + \"\\\"\") + \",\\\"address\\\":\\\"\") + marketStr) + \"\\\"\") + \",\\\"assetPrice\\\":\") + assetToJson(usdtIdStr, price)) + \",\\\"supply\\\":\") + assetToJson(assetIdStr, supply)) + \",\\\"supplyInUsd\\\":\") + assetToJson(usdtIdStr, supplyInUsd)) + \",\\\"supplyApy\\\":\") + amountToDecimal(supplyApy, 8)) + \",\\\"borrow\\\":\") + assetToJson(assetIdStr, borrow)) + \",\\\"borrowInUsd\\\":\") + assetToJson(usdtIdStr, borrowInUsd)) + \",\\\"borrowApy\\\":\") + amountToDecimal(borrowApy, 8)) + \",\\\"reserves\\\":\") + assetToJson(assetIdStr, reserves)) + \",\\\"reservesInUsd\\\":\") + assetToJson(usdtIdStr, reservesInUsd)) + \",\\\"utilizationRatio\\\":\") + amountToDecimal(ur, 8)) + \",\\\"collateralFactor\\\":\") + amountToDecimal(cf, 8)) + \",\\\"liquidationThreshold\\\":\") + amountToDecimal(lt, 8)) + \",\\\"liquidationPenalty\\\":\") + amountToDecimal(penalty, 8)) + \",\\\"maxSupply\\\":\") + assetToJson(usdtIdStr, maxSupply)) + \",\\\"walletSupply\\\":\") + assetToJson(assetIdStr, walletSupply)) + \",\\\"walletSupplyInUsd\\\":\") + assetToJson(usdtIdStr, walletSupplyInUsd)) + \",\\\"walletDailyIncome\\\":\") + assetToJson(assetIdStr, walletDailyIncome)) + \",\\\"walletDailyIncomeInUsd\\\":\") + assetToJson(usdtIdStr, walletDailyIncomeInUsd)) + \",\\\"walletBorrow\\\":\") + assetToJson(assetIdStr, walletBorrow)) + \",\\\"walletBorrowInUsd\\\":\") + assetToJson(usdtIdStr, walletBorrowInUsd)) + \",\\\"walletDailyLoanInterest\\\":\") + assetToJson(assetIdStr, walletDailyLoanPercents)) + \",\\\"walletDailyLoanInterestInUsd\\\":\") + assetToJson(usdtIdStr, walletDailyLoanPercentsInUsd)) + \",\\\"accountHealth\\\":\") + amountToDecimal(accountHealth, 8)) + \",\\\"netApy\\\":\") + amountToDecimal(netApy, 8)) + \"}\")
+    if (debug)
+        then throw(json)
+        else json
+    }
+
+
+func getMarketParametersJson (marketIndex,debug) = {
+    let marketStr = getStringValue((\"market_\" + toString(marketIndex)))
+    let marketAddress = addressFromStringValue(marketStr)
+    let marketName = getStringValue((\"market_name_\" + marketStr))
+    let setupTokens = getSetupTokens(marketAddress)
+    let setupCf = split_4C(getStringValue(marketAddress, \"setup_ltvs\"), \",\")
+    let setupLt = split_4C(getStringValue(marketAddress, \"setup_lts\"), \",\")
+    let setupPenalty = split_4C(getStringValue(marketAddress, \"setup_penalties\"), \",\")
+    let assetsCount = size(setupTokens)
+    func assetsFold (accum,next) =     if ((next >= assetsCount))
+        then accum
+        else {
+            let assetIdStr = setupTokens[next]
+            let maxSupply = getMaxSupply(marketAddress, assetIdStr)
+            let cf = parseIntValue(setupCf[next])
+            let lt = parseIntValue(setupLt[next])
+            let penalty = parseIntValue(setupPenalty[next])
+            let json = (((((((((((\"{\" + \"\\\"asset\\\":\") + assetToJson(assetIdStr, 0)) + \",\\\"maxSupply\\\":\") + assetToJson(usdtIdStr, maxSupply)) + \",\\\"collateralFactor\\\":\") + amountToDecimal(cf, 8)) + \",\\\"liquidationThreshold\\\":\") + amountToDecimal(lt, 8)) + \",\\\"liquidationPenalty\\\":\") + amountToDecimal(penalty, 8)) + \"}\")
+            (accum :+ json)
+            }
+
+    let assetsJson = {
+        let $l = arr12
+        let $s = size($l)
+        let $acc0 = nil
+        func $f0_1 ($a,$i) =         if (($i >= $s))
+            then $a
+            else assetsFold($a, $l[$i])
+
+        func $f0_2 ($a,$i) =         if (($i >= $s))
+            then $a
+            else throw(\"List size exceeds 12\")
+
+        $f0_2($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($f0_1($acc0, 0), 1), 2), 3), 4), 5), 6), 7), 8), 9), 10), 11), 12)
+        }
+    let json = (((((((\"{\" + \"\\\"name\\\":\\\"\") + marketName) + \"\\\"\") + \",\\\"assets\\\":[\") + makeString_11C(assetsJson, \",\")) + \"]\") + \"}\")
+    if (debug)
+        then throw(json)
+        else json
+    }
