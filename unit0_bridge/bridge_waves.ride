@@ -1,0 +1,589 @@
+{-# STDLIB_VERSION 8 #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+{-# CONTENT_TYPE DAPP #-}
+
+let INT_MAX = 9223372036854775807
+let WAVES = 100000000
+let MIN_BALANCE = (20000 * WAVES)
+let SEP = ","
+let BLOCK_HASH_SIZE = 32
+let PUBLIC_KEY_HASH_SIZE = 20
+let ROOT_HASH_SIZE = 32
+let WITHDRAW_PROOFS_SIZE = 10
+let ETH_ADDRESS_STR_SIZE = 40
+let MAX_CL_TO_EL_TRANSFERS = 16
+let zeroesStr = "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+let offsets_100 = split_4C("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::", "")
+let allMinersKey = "allMiners"
+let mainChainIdKey = "mainChainId"
+let lastChainIdKey = "lastChainId"
+let firstValidAltChainIdKey = "firstValidAltChainId"
+let minerRewardKey = "minerReward"
+let blockMetaK = "block_0x"
+let finalizedBlockKey = "finalizedBlock"
+let tokenIdKey = "tokenId"
+let elBridgeAddressKey = "elBridgeAddress"
+let nativeTransfersCountKey = "nativeTransfersCount"
+let daoAddressKey = "daoAddress"
+let daoRewardKey = "daoReward"
+
+func pad (i: Int) = {
+    let s = toString(i)
+    match size(s) {
+        case 1 => "0000000" + s
+        case 2 => "000000" + s
+        case 3 => "00000" + s
+        case 4 => "0000" + s
+        case 5 => "000" + s
+        case 6 => "00" + s
+        case 7 => "0" + s
+        case _ => s
+    }
+}
+
+func blockE2CTransfersKey (blockHashHex: String) = ("elToClTransfers_0x" + blockHashHex)
+func epochMetaKey (epoch: Int) = ("epoch_" + pad(epoch))
+func chainFirstBlockIdKey (chainId: Int) = (("chain" + toString(chainId)) + "FirstBlock")
+func chainMetaKey (chainId: Int) = ("chain_" + pad(chainId))
+func chainLastHeightKey (chainId: Int, miner: Address) = ((("chain_" + pad(chainId)) + "_") + toString(miner))
+func chainForkedHeightKey (chainId: Int) = (("chain_" + pad(chainId)) + "ForkedHeight")
+func supportersKey (chainId: Int) = (("chain" + toString(chainId)) + "Supporters")
+func minerRewardAddressKey (minerAddr: String) = (("miner_" + minerAddr) + "_RewardAddress")
+func minerPkKey (rewardAddress: String) = (("miner_0x" + rewardAddress) + "_PK")
+func minerChainIdKey (miner: Address) = (("miner_" + toString(miner)) + "_ChainId")
+let nativeTransfersCount = valueOrElse(getInteger(this, nativeTransfersCountKey), 0)
+func nativeTransferKey (index: Int) = ("nativeTransfer_" + toString(index))
+func mkNativeTransferEntry (index: Int, destElAddressHex: String, amount: Int) = StringEntry(nativeTransferKey(index), ((("0x" + destElAddressHex) + SEP) + toString(amount)))
+
+func ensureCorrectTransfers (refTransferIndex: Int, transferIndex: Int, expectReward: Boolean) = {
+    let maxTransfers = if (expectReward) then (MAX_CL_TO_EL_TRANSFERS - 1) else MAX_CL_TO_EL_TRANSFERS
+    let actualTransfers = (transferIndex - refTransferIndex)
+    if ((actualTransfers > maxTransfers)) then throw(((("Allowed only " + toString(maxTransfers)) + " transfers, got ") + toString(actualTransfers)))else
+    if ((transferIndex >= nativeTransfersCount)) then throw(((("Attempt to transfer #" + toString(transferIndex)) + ". Available transfers: ") + toString(nativeTransfersCount))) else
+    true
+}
+    
+func amountGtEq (t: AttachedPayment, gtEq: Int, queueSize: Int) = if ((t.amount >= gtEq))
+    then true
+    else throw((((((("Transferring amount " + toString(t.amount)) + " should be >= ") + toString(gtEq)) + " for queue size of ") + toString(queueSize)) + ". Transfer more or wait"))
+
+func generatingBalance (address: Address) = wavesBalance(address).generating
+
+func chainMeta (chainId: Int) = {
+    let s = getStringValue(chainMetaKey(chainId))
+    let items = split(s, SEP)
+    (parseIntValue(items[0]), items[1])
+}
+
+func mkChainMetaEntry (chainId: Int, newChainHeight: Int, blockHashHex: String) = 
+    StringEntry(chainMetaKey(chainId), toString(newChainHeight) + SEP + blockHashHex)
+
+let mainChainId = valueOrElse(getInteger(mainChainIdKey), 0)
+let (mainChainHeight, mainChainLastBlock) = chainMeta(mainChainId)
+
+func epochMeta (epoch: Int) = 
+    match getString(epochMetaKey(epoch)) {
+        case s: String => 
+            let fragments = split(s, SEP)
+            (addressFromStringValue(fragments[0]), parseIntValue(fragments[1]), fragments[2])
+        case _ => unit
+    }
+
+let (thisEpochMiner, thisEpochRef) = match epochMeta(height) {
+    case m: (Address, Int, String) => m
+    case _ => (unit, 0)
+}
+
+let allMinersStr = valueOrElse(getString(allMinersKey), "")
+
+let allMiners = match allMinersStr {
+    case "" => nil
+    case raw: String => split_4C(raw, SEP)
+    case _ => throw("Match error")
+}
+
+func blockMeta (blockId: String) = {
+    let meta = getBinaryValue((blockMetaK + blockId))
+    let metaSize = size(meta)
+    let blockHeight = toInt(meta)
+    let blockEpoch = toInt(meta, 8)
+    let blockParent = take(drop(meta, 16), BLOCK_HASH_SIZE)
+    let chainId = toInt(meta, (16 + BLOCK_HASH_SIZE))
+    let baseOffset = (24 + BLOCK_HASH_SIZE)
+    let remainingBytes = (metaSize - baseOffset)
+    let e2cTransfersRootHash = if ((remainingBytes >= ROOT_HASH_SIZE))
+        then take(drop(meta, baseOffset), ROOT_HASH_SIZE)
+        else base58''
+    let lastC2ETransferIndex = if (remainingBytes == 8 || remainingBytes > ROOT_HASH_SIZE)
+        then toInt(meta, (baseOffset + size(e2cTransfersRootHash)))
+        else -1
+    (blockHeight, blockEpoch, blockParent, chainId, e2cTransfersRootHash, lastC2ETransferIndex)
+}
+
+func mkBlockMetaEntry (blockHashHex: String, blockHeight: Int, blockParentHex: String, 
+        chainId: Int, e2cTransfersRootHashHex: String, lastC2ETransferIndex: Int) = {
+    let e2cTransfersRootHashBytes = fromBase16String(e2cTransfersRootHashHex)
+    let rootHashBytesSize = size(e2cTransfersRootHashBytes)
+    if (rootHashBytesSize != 0 && rootHashBytesSize != ROOT_HASH_SIZE) then 
+        throw("Transfers root hash should have 0 or " + toString(ROOT_HASH_SIZE) + " bytes, got " + toString(rootHashBytesSize)) else
+
+    let blockMetaBytes = toBytes(blockHeight) + toBytes(height) + fromBase16String(blockParentHex) + toBytes(chainId) + e2cTransfersRootHashBytes + toBytes(lastC2ETransferIndex)
+    BinaryEntry(blockMetaK + blockHashHex, blockMetaBytes)
+}
+
+func lastHeightBy (miner: Address, chainId: Int) = match getInteger(chainLastHeightKey(chainId, miner)) {
+    case h: Int => h
+    case _ => 
+        let blockHash = getStringValue(((("chain" + toString(chainId)) + "LastMinedBy") + toString(miner)))
+        blockMeta(blockHash)._1
+}
+
+let (computedGenerator, computedTotalBalance, ignored3, ignored4) = {
+    let hitSource = match lastBlock.vrf {
+        case vrf: ByteVector => vrf
+        case _ => lastBlock.generationSignature
+    }
+
+    func processMiner (prev: (String, Int, Int, List[String]), miner: String) = {
+        let prevMiner = prev._1
+        let prevTotalBalance = prev._2
+        let prevDelay = prev._3
+        let prevMiners = prev._4
+        let minerAddress = addressFromStringValue(miner)
+        let wavesGenBalance = wavesBalance(minerAddress).generating
+        let minerBalance = generatingBalance(minerAddress)
+        if (MIN_BALANCE > wavesGenBalance || 0 >= minerBalance) then prev else {
+            let nextDelay = calculateDelay(minerAddress, minerBalance)
+            if (prevDelay > nextDelay)
+                then (miner, prevTotalBalance + minerBalance, nextDelay, prevMiners :+ miner)
+                else (prevMiner, prevTotalBalance + minerBalance, prevDelay, prevMiners :+ miner)
+        }
+    }
+    FOLD<50>(allMiners, ("", 0, INT_MAX, []), processMiner)
+}
+
+let mainChainEpoch = blockMeta(mainChainLastBlock)._2
+
+func calculateFinalizedBlockHashAndEpoch (curMiner: Address, curPrevEpoch: Int, curLastBlockHash: String|Unit) = {
+    let halfBalance = (computedTotalBalance / 2)
+
+    func step (prev: (Int, String|Unit, Int, List[Address], Int), next: String) = {
+        let thisEpoch = prev._1
+        let maybeFinalizedBlockHash = prev._2
+        let totalBalance = prev._3
+        let prevMiners = prev._4
+        match maybeFinalizedBlockHash {
+            case _: Unit => 
+                let (miner, prevEpoch, lastBlockHash) = if (thisEpoch == height)
+                    then (curMiner, curPrevEpoch, curLastBlockHash)
+                    else epochMeta(thisEpoch).value()
+                if (if ((prevEpoch == 0))
+                    then true
+                    else ((height - thisEpoch) >= 100))
+                    then (thisEpoch, lastBlockHash, totalBalance, allMiners)
+                    else {
+                        let (newTotalBalance, newMiners) = if (containsElement(prevMiners, miner))
+                            then (totalBalance, prevMiners)
+                            else ((totalBalance + generatingBalance(miner)), miner :: prevMiners)
+                        if ((newTotalBalance > halfBalance))
+                            then (thisEpoch, lastBlockHash, newTotalBalance, allMiners)
+                            else (prevEpoch, unit, newTotalBalance, newMiners)
+                        }
+            case _ => prev
+        }
+    }
+    let (finalizedEpoch, finalizedBlockHashOpt, ignored1, ignored2) = FOLD<100>(offsets_100, (height, unit, 0, [], 0), step)
+    (match finalizedBlockHashOpt {
+        case finalizedBlockHash: String => finalizedBlockHash
+        case _ => epochMeta(finalizedEpoch).value()._3
+    }, finalizedEpoch)
+}
+
+func supportingBalance (chainId: Int) = {
+    func addBalance (acc: (Int, List[Address]), generatorStr: String) = {
+        let totalBalance = acc._1
+        let generators = acc._2
+        let generator = addressFromStringValue(generatorStr)
+        if (containsElement(generators, generator)) then acc else {
+            let balance = generatingBalance(generator)
+            ((totalBalance + balance), (generators :+ generator))
+        }
+    }
+    let allGenerators = split_4C(getStringValue(supportersKey(chainId)), SEP)
+    let res = FOLD<100>(allGenerators, (0, []), addBalance)
+    res._1
+}
+
+func isContractSetup () = isDefined(getInteger(minerRewardKey))
+
+func ensureMiningEpoch (generator: Address) = if ((toString(generator) != computedGenerator))
+    then throw(((((toBase58String(generator.bytes) + " is not allowed to mine in ") + toString(height)) + " epoch. Expected ") + computedGenerator))
+    else unit
+
+func isReferenceCorrect (reference: String, lastBlock: String) = 
+    if (reference != lastBlock) then throw(((("Expected a reference to the chain last block: 0x" + lastBlock) + ". Got: 0x") + reference)) else 
+    unit
+
+func chainIsInactive (chainId: Int) = {
+    let firstBlockId = getStringValue(chainFirstBlockIdKey(chainId))
+    let firstValidAltChainId = valueOrElse(getInteger(firstValidAltChainIdKey), 0)
+    if ((firstValidAltChainId > chainId))
+        then true
+        else (blockMeta(getStringValue(finalizedBlockKey))._1 > blockMeta(firstBlockId)._1)
+    }
+func minerChainId (miner: Address) = valueOrElse(getInteger(minerChainIdKey(miner)), getInteger(("chainIdOf" + toString(miner))))
+
+func ensureExpectedOrInactiveChain (generator: Address, expectedChainId: Int, checkHeightBlock: String|Unit) = {
+    let heightIsCorrect = match checkHeightBlock {
+        case blockHash: String => 
+            let lastMinedBlockHeight = lastHeightBy(generator, mainChainId)
+            ((blockMeta(blockHash)._1 + 1) > lastMinedBlockHeight)
+        case _ => true
+    }
+    match minerChainId(generator) {
+        case currentId: Int => 
+            if (if ((currentId == expectedChainId))
+                then true
+                else if (chainIsInactive(currentId))
+                    then heightIsCorrect
+                    else false)
+                then unit
+                else throw(("miner is mining other chain " + toString(currentId)))
+        case _ => unit
+    }
+}
+
+let heightString = (" at height " + toString(height))
+
+func vrfAt (height: Int) = 
+    valueOrErrorMessage(valueOrErrorMessage(blockInfoByHeight(height), "last block is not available" + heightString).vrf, 
+        ("VRF is not available" + heightString))
+
+func ensureCorrectEpoch (expectedVRF: ByteVector) = {
+    let actualVRF = vrfAt(height)
+    if ((expectedVRF == actualVRF))
+        then unit
+        else throw("Expected VRF " + toBase58String(expectedVRF) + " does not match actual " + toBase58String(actualVRF) + heightString)
+    }
+
+func addSupporter (chainId: Int, generator: Address) = {
+    let supportersStr = getStringValue(supportersKey(chainId))
+    let supporters = split_4C(supportersStr, SEP)
+    if (containsElement(supporters, toString(generator)))
+        then nil
+        else [StringEntry(supportersKey(chainId), ((supportersStr + SEP) + toString(generator)))]
+    }
+
+func setOrFail (flags: String, index: Int) = {
+    if (index < 0) then throw("Can't withdraw at negative index: " + toString(index)) else
+    let flagsSize = size(flags)
+    if (index >= flagsSize) then {
+        let addZeroes = index - flagsSize
+        if (addZeroes > size(zeroesStr)) then throw("Can't add " + toString(addZeroes) + " empty flags. Contact with developers") else 
+        ((flags + take(zeroesStr, addZeroes)) + "1")
+    } else {
+        let tail = drop(flags, index)
+        let atIndex = take(tail, 1)
+        if (atIndex != "0") then throw((("Transfer #" + toString(index)) + " has been already taken")) else
+        (take(flags, index) + "1" + drop(tail, 1))
+    }
+}
+
+func validateBlockHash (hexStr: String) = {
+    let decodedBytes = fromBase16String(hexStr)
+    if (size(decodedBytes) != BLOCK_HASH_SIZE) then throw("invalid block id length") else 
+    hexStr
+}
+
+func getUpdateFinalizedBlockAction (caller: Address, newBlockHashHex: String, prevEpoch: Int) = {
+    let curFinalizedBlockMeta = blockMeta(getStringValue(finalizedBlockKey))
+    let (newFinalizedBlockHash, newFinalizedEpoch) = calculateFinalizedBlockHashAndEpoch(caller, prevEpoch, newBlockHashHex)
+    let rewardActions = match getString(daoAddressKey) {
+        case addr: String => 
+            if (newFinalizedEpoch == curFinalizedBlockMeta._2) then [] else {
+                func countNonEmptyEpochs (acc: (Int, Int), next: String) =
+                    if (acc._1 == curFinalizedBlockMeta._2) then acc else
+                        match epochMeta(acc._1) {
+                        case m: (Address, Int, String) => (m._2, (acc._2 + 1))
+                        case _ => acc
+                    }
+                let startFromEpoch = if ((newFinalizedEpoch == height))
+                    then prevEpoch
+                    else valueOrErrorMessage(epochMeta(newFinalizedEpoch), "no prev epoch for start")._2
+                let daoRewards = FOLD<100>(offsets_100, (startFromEpoch, 1), countNonEmptyEpochs)
+                let reissueAmount = daoRewards._2 * getIntegerValue(daoRewardKey)
+                let tokenId = fromBase58String(getStringValue(tokenIdKey))
+                [Reissue(tokenId, reissueAmount, true), ScriptTransfer(Address(fromBase58String(addr)), reissueAmount, tokenId)]
+            }
+        case _ => []
+    }
+    (rewardActions ++ 
+        (if (newFinalizedBlockHash == newBlockHashHex || blockMeta(newFinalizedBlockHash)._1 > curFinalizedBlockMeta._1)
+        then [StringEntry(finalizedBlockKey, newFinalizedBlockHash)]
+        else []))
+}
+
+@Callable(i)
+func extendMainChain (blockHashHex: String, referenceHex: String, vrf: ByteVector, e2cTransfersRootHashHex: String, lastC2ETransferIndex: Int) = {
+    strict checkBlockHash = validateBlockHash(blockHashHex)
+    strict checkEpoch = ensureCorrectEpoch(vrf)
+    strict checkChain = ensureExpectedOrInactiveChain(i.originCaller, mainChainId, unit)
+    strict checkReference = isReferenceCorrect(referenceHex, mainChainLastBlock)
+    strict checkTransfers = ensureCorrectTransfers(blockMeta(referenceHex)._6, lastC2ETransferIndex, true)
+    strict thisEpochMeta = match epochMeta(height) {
+        case _: Unit => StringEntry(epochMetaKey(height), toString(i.originCaller) + SEP + toString(mainChainEpoch) + SEP + blockHashHex)
+        case other => throw("Epoch already started")
+    }
+    strict checkGenerator = ensureMiningEpoch(i.originCaller)
+    let updateFinalizedBlock = getUpdateFinalizedBlockAction(i.originCaller, blockHashHex, mainChainEpoch)
+    let newChainHeight = (mainChainHeight + 1)
+    ([
+        mkBlockMetaEntry(blockHashHex, newChainHeight, mainChainLastBlock, mainChainId, e2cTransfersRootHashHex, lastC2ETransferIndex), 
+        mkChainMetaEntry(mainChainId, newChainHeight, blockHashHex), 
+        IntegerEntry(minerChainIdKey(i.originCaller), mainChainId), 
+        IntegerEntry(chainLastHeightKey(mainChainId, i.originCaller), newChainHeight), 
+        thisEpochMeta
+    ] ++ updateFinalizedBlock)
+}
+
+@Callable(i)
+func startAltChain (blockHashHex: String, referenceHex: String, vrf: ByteVector, e2cTransfersRootHashHex: String, lastC2ETransferIndex: Int) = {
+    strict checkBlockHash = validateBlockHash(blockHashHex)
+    strict checkEpoch = ensureCorrectEpoch(vrf)
+    let (refChainHeight, refEpoch, refIgnored1, refIgnored2, refIgnored3, refTransferIndex) = blockMeta(referenceHex)
+    let finalizedEpoch = blockMeta(getStringValue(finalizedBlockKey))._2
+    let epochRef = if ((refEpoch >= finalizedEpoch))
+        then refEpoch
+        else throw("Can not start alt chain from epoch " + toString(refEpoch) + ", epoch " + toString(finalizedEpoch) + " is finalized")
+    strict checkChain = ensureExpectedOrInactiveChain(i.originCaller, mainChainId, referenceHex)
+    strict checkTransfers = ensureCorrectTransfers(refTransferIndex, lastC2ETransferIndex, true)
+    let newChainId = (valueOrElse(getInteger(lastChainIdKey), 0) + 1)
+    let newChainHeight = (refChainHeight + 1)
+    let thisEpochMeta = match epochMeta(height) {
+        case _: Unit => StringEntry(epochMetaKey(height), toString(i.originCaller) + SEP + toString(epochRef) + SEP + blockHashHex)
+        case other => throw("Epoch already started")
+    }
+    strict checkGenerator = ensureMiningEpoch(i.originCaller)
+    [thisEpochMeta, 
+        mkBlockMetaEntry(blockHashHex, newChainHeight, referenceHex, newChainId, e2cTransfersRootHashHex, lastC2ETransferIndex), 
+        StringEntry(chainFirstBlockIdKey(newChainId), blockHashHex), 
+        mkChainMetaEntry(newChainId, newChainHeight, blockHashHex), 
+        IntegerEntry(minerChainIdKey(i.originCaller), newChainId), 
+        IntegerEntry(chainLastHeightKey(newChainId, i.originCaller), newChainHeight), 
+        IntegerEntry(chainLastHeightKey(mainChainId, i.originCaller), newChainHeight), 
+        StringEntry(supportersKey(newChainId), toString(i.originCaller)), 
+        IntegerEntry(lastChainIdKey, newChainId)
+    ]
+}
+
+@Callable(i)
+func extendAltChain (blockHashHex: String, referenceHex: String, vrf: ByteVector, chainId: Int, e2cTransfersRootHashHex: String, lastC2ETransferIndex: Int) = {
+    strict checkBlockHash = validateBlockHash(blockHashHex)
+    strict checkEpoch = ensureCorrectEpoch(vrf)
+    let chainFirstBlockMeta = blockMeta(getStringValue(chainFirstBlockIdKey(chainId)))
+    strict checkChain = ensureExpectedOrInactiveChain(i.originCaller, chainId, toBase16String(chainFirstBlockMeta._3))
+    let (chainHeight, chainLastBlock) = chainMeta(chainId)
+    strict checkReference = isReferenceCorrect(referenceHex, chainLastBlock)
+    strict checkTransfers = ensureCorrectTransfers(blockMeta(referenceHex)._6, lastC2ETransferIndex, true)
+    let newChainHeight = (chainHeight + 1)
+    let prevEpoch = blockMeta(referenceHex)._2
+    let updateMainChainData = if (supportingBalance(chainId) > (computedTotalBalance / 2)) then {
+            let lastChainId = valueOrElse(getInteger(lastChainIdKey), 0)
+            let updateFinalizedBlock = getUpdateFinalizedBlockAction(i.originCaller, blockHashHex, prevEpoch)
+            ([
+                IntegerEntry(chainForkedHeightKey(mainChainId), chainFirstBlockMeta._1), 
+                IntegerEntry(mainChainIdKey, chainId), 
+                IntegerEntry(firstValidAltChainIdKey, lastChainId + 1)
+            ] ++ updateFinalizedBlock)
+        } else []
+    strict thisEpochMeta = match epochMeta(height) {
+        case _: Unit => StringEntry(epochMetaKey(height), toString(i.originCaller) + SEP + toString(prevEpoch) + SEP + blockHashHex)
+        case other => throw("Epoch already started")
+    }
+    strict checkGenerator = ensureMiningEpoch(i.originCaller)
+    let updateMainChainLastMinedBlock = if (updateMainChainData == [] && valueOrElse(minerChainId(i.originCaller), 0) != chainId)
+        then [IntegerEntry(chainLastHeightKey(mainChainId, i.originCaller), chainFirstBlockMeta._1)]
+        else []
+    [
+        mkBlockMetaEntry(blockHashHex, newChainHeight, referenceHex, chainId, e2cTransfersRootHashHex, lastC2ETransferIndex), 
+        mkChainMetaEntry(chainId, newChainHeight, blockHashHex), 
+        thisEpochMeta, 
+        IntegerEntry(minerChainIdKey(i.originCaller), chainId), 
+        IntegerEntry(chainLastHeightKey(chainId, i.originCaller), newChainHeight)
+    ] ++ updateMainChainData ++ addSupporter(chainId, i.originCaller) ++ updateMainChainLastMinedBlock
+}
+
+@Callable(i)
+func appendBlock (blockHashHex: String, referenceHex: String, e2cTransfersRootHashHex: String, lastC2ETransferIndex: Int) = {
+    strict checkCaller = if ((thisEpochMiner != i.originCaller)) then match thisEpochMiner {
+        case epochMiner: Address => throw(("not allowed to forge blocks in this epoch, expected from " + toString(epochMiner)))
+        case _ => throw("not allowed to forge blocks in this epoch, epoch miner is absent")
+    } else true
+    let chainId = valueOrElse(minerChainId(i.originCaller), mainChainId)
+    let (chainHeight, lastBlockId) = chainMeta(chainId)
+    strict checkReference = isReferenceCorrect(referenceHex, lastBlockId)
+    strict checkTransfers = ensureCorrectTransfers(blockMeta(referenceHex)._6, lastC2ETransferIndex, false)
+    let newChainHeight = (chainHeight + 1)
+    strict checkBlockHash = validateBlockHash(blockHashHex)
+    [
+        mkBlockMetaEntry(blockHashHex, newChainHeight, lastBlockId, chainId, e2cTransfersRootHashHex, lastC2ETransferIndex), 
+        IntegerEntry(chainLastHeightKey(chainId, i.originCaller), newChainHeight), 
+        mkChainMetaEntry(chainId, newChainHeight, blockHashHex), 
+        StringEntry(epochMetaKey(height), toString(value(thisEpochMiner)) + SEP + toString(thisEpochRef) + SEP + blockHashHex)
+    ]
+}
+
+@Callable(i)
+func join (rewardAddressHex: String) = {
+
+    func ensureNotOverrideOtherMinerPk (elAddressHex: String) = match getBinary(minerPkKey(elAddressHex)) {
+        case pk: ByteVector => 
+            if (pk != i.originCallerPublicKey) then throw("EL miner address " + elAddressHex + " is already linked with " + toBase58String(pk)) else 
+            unit
+        case _ => unit
+    }
+
+    let parts = split(rewardAddressHex, "0x")
+    let rewardAddress = fromBase16String(parts[(size(parts) - 1)])
+    let networkIsLaunched = match getInteger("launchHeight") {
+        case launchHeight: Int => (height >= launchHeight)
+        case _ => throw("not launched yet")
+    }
+    if (!isContractSetup() || !networkIsLaunched) then throw("The contract has not yet set up") else 
+    if ((MIN_BALANCE > wavesBalance(i.originCaller).generating)) then throw(((("Insufficient generating balance: " + toString(wavesBalance(i.originCaller).generating)) + ". Required: ") + toString(MIN_BALANCE))) else 
+    if ((size(rewardAddress) != 20)) then throw("rewardAddress should be an L2 address") else 
+    if ((size(allMiners) >= 50)) then throw("too many miners") else 
+
+    func checkExistence (exists: Boolean, miner: String) = exists || miner == toString(i.originCaller)
+    let alreadyExists = FOLD<50>(allMiners, false, checkExistence)
+
+    if (alreadyExists) then [] else {
+        let newMiner = toString(i.originCaller)
+        let lowercaseRewardAddress = toBase16String(rewardAddress)
+        strict check = ensureNotOverrideOtherMinerPk(lowercaseRewardAddress)
+        let newMiners = if (size(allMiners) == 0) then newMiner else (allMinersStr + SEP + newMiner)
+        let deletePrevRewardAddressPk = match getString(minerRewardAddressKey(newMiner)) {
+            case prevAddress: String => if (prevAddress == toBase16String(rewardAddress)) then [] else [DeleteEntry(minerPkKey(prevAddress))]
+            case _ => []
+        }
+        [
+            StringEntry(allMinersKey, newMiners), 
+            StringEntry(minerRewardAddressKey(newMiner), "0x" + lowercaseRewardAddress), 
+            BinaryEntry(minerPkKey(lowercaseRewardAddress), i.originCallerPublicKey)
+        ] ++ deletePrevRewardAddressPk
+    }
+}
+
+@Callable(i)
+func leave () = {
+    let leavingMiner = toString(i.originCaller)
+    func skipLeavingMiner (acc: List[String], miner: String) = if (miner == leavingMiner) then acc else (acc :+ miner)
+    let remainingMiners = FOLD<50>(allMiners, [], skipLeavingMiner)
+    let rewardAddrKey = minerRewardAddressKey(leavingMiner)
+    strict prevRewardAddress = valueOrErrorMessage(getString(this, rewardAddrKey), "miner has never joined")
+    if ((thisEpochMiner == i.originCaller)) then throw("designated miner can't leave") else 
+    [StringEntry(allMinersKey, makeString_2C(remainingMiners, SEP))]
+}
+
+@Callable(i)
+func transfer (destElAddressHex: String) = {
+    strict checkAddress = if ((size(destElAddressHex) == ETH_ADDRESS_STR_SIZE))
+        then fromBase16String(destElAddressHex)
+        else throw(((("Address should have " + toString(ETH_ADDRESS_STR_SIZE)) + " characters, got ") + toString(size(destElAddressHex))))
+    strict checkPayment = if (size(i.payments) != 1) then throw(("Expected one payment as a transfer amount, got " + toString(size(i.payments)))) else true
+    let tokenIdStr = getStringValue(tokenIdKey)
+    let tokenId = fromBase58String(tokenIdStr)
+    let t = i.payments[0]
+    strict checkAssetId = match t.assetId {
+        case assetId: ByteVector => 
+            if (assetId != tokenId) then throw("Expected " + tokenIdStr + " in the payment, got " + toBase58String(assetId)) else 
+            true
+        case _ => throw((("Expected " + tokenIdStr) + " in the payment, got Waves"))
+    }
+    let lastIndex = blockMeta(mainChainLastBlock)._6
+    let queueSize = (nativeTransfersCount - lastIndex)
+    strict checkQueueLimit = if ((160 > queueSize)) then amountGtEq(t, 1000000, queueSize) else 
+    if ((1600 > queueSize)) then amountGtEq(t, 10000000, queueSize) else 
+    if ((3200 > queueSize)) then amountGtEq(t, 100000000, queueSize) else 
+    if ((6400 > queueSize)) then amountGtEq(t, 1000000000, queueSize) else
+        throw((("Transfers denied for queue size of " + toString(queueSize)) + ". Wait until current transfers processed"))
+    
+    [
+        IntegerEntry(nativeTransfersCountKey, (nativeTransfersCount + 1)), 
+        mkNativeTransferEntry(nativeTransfersCount, destElAddressHex, t.amount), 
+        Burn(tokenId, t.amount)
+    ]
+}
+
+@Callable(i)
+func withdraw (blockHashHex: String, merkleProof: List[ByteVector], transferIndexInBlock: Int, amount: Int) = {
+    let withdrawBlockMeta = blockMeta(blockHashHex)
+    let withdrawBlockHeight = withdrawBlockMeta._1
+    let finalizedBlockHeight = blockMeta(getStringValue(finalizedBlockKey))._1
+    let mainChainLastBlockHeight = blockMeta(mainChainLastBlock)._1
+    if ((withdrawBlockHeight > finalizedBlockHeight)) then throw(((("EL block #" + toString(withdrawBlockHeight)) + " is not finalized. The current finalized is #") + toString(finalizedBlockHeight))) else 
+    if ((size(merkleProof) != WITHDRAW_PROOFS_SIZE)) then throw(((("Expected " + toString(WITHDRAW_PROOFS_SIZE)) + " proofs, got ") + toString(size(merkleProof)))) else 
+    if ((0 > transferIndexInBlock)) then throw(("Transfer index in block should be nonnegative, got " + toString(transferIndexInBlock))) else 
+    if ((0 >= amount)) then throw(("Amount should be positive, got " + toString(amount))) else 
+    let withdrawBlockChainId = withdrawBlockMeta._4
+    let isMainChain = (withdrawBlockChainId == mainChainId)
+    let relatesToMainChain = match getInteger(chainForkedHeightKey(withdrawBlockChainId)) {
+        case forkedHeight: Int => (forkedHeight > withdrawBlockHeight)
+        case _ => throw((((blockHashHex + " is on an alternative chain #") + toString(withdrawBlockChainId)) + " that was not approved by majority. Wait for some blocks"))
+    }
+    if (!(isMainChain || relatesToMainChain)) then throw((("Expected " + blockHashHex) + " to be either on the main chain or relate to it")) else
+    let recipient = i.originCaller
+    let recipientPkHash = take(drop(recipient.bytes, 2), PUBLIC_KEY_HASH_SIZE)
+    let zeroAmountBytes = base58'11111111111111111111111111111111111111111111'
+    let amountBytes = toBytes(amount)
+    let elEventData = ((recipientPkHash + take(zeroAmountBytes, (size(zeroAmountBytes) - size(amountBytes)))) + amountBytes)
+    let elEventDataDigest = blake2b256_16Kb(elEventData)
+    let calculatedRootHash = createMerkleRoot(merkleProof, elEventDataDigest, transferIndexInBlock)
+    let expectedRootHash = withdrawBlockMeta._5
+    if (calculatedRootHash != expectedRootHash) then throw((((((("Expected root hash: " + toBase16String(expectedRootHash)) + ", got: ") + toBase16String(calculatedRootHash)) + ". Event data digest: ") + toBase64String(elEventDataDigest)) + ". Check your withdraw arguments")) else
+    let tokenId = fromBase58String(getStringValue(tokenIdKey))
+    let transfersKey = blockE2CTransfersKey(blockHashHex)
+    [
+        Reissue(tokenId, amount, true), 
+        ScriptTransfer(recipient, amount, tokenId), 
+        StringEntry(transfersKey, setOrFail(valueOrElse(getString(transfersKey), ""), transferIndexInBlock))
+    ]
+}
+
+@Callable(i)
+func setup (genesisBlockHashHex: String, minerRewardInGwei: Int, daoAddress: String, daoReward: Int) = {
+    if (isContractSetup()) then throw("The contract has been already set up")else 
+    if (minerRewardInGwei < 0) then throw("The miner reward must be nonnegative") else 
+    let genesisBlockHash = fromBase16String(genesisBlockHashHex)
+    if (size(genesisBlockHash) != BLOCK_HASH_SIZE) then throw("Wrong genesis block hash") else 
+    if (daoReward <= 0) then throw("invalid DAO reward amount") else
+    let emptyPk = base58'11111111111111111111111111111111'
+    let genesisMinerAddress = addressFromPublicKey(emptyPk)
+    let genesisEthRewardAddress = base58'11111111111111111111'
+    let genesisBlockReferenceHash = "0000000000000000000000000000000000000000000000000000000000000000"
+    let issue = Issue("UNIT0", "Native token", 0, 8, true)
+    let tokenId = calculateAssetId(issue)
+    let genesisBlockMeta = mkBlockMetaEntry(genesisBlockHashHex, 0, genesisBlockReferenceHash, 0, toBase16String(base58''), -1)
+    let daoEntries = if (daoAddress == "") then [] else 
+        [StringEntry(daoAddressKey, toString(Address(fromBase58String(daoAddress)))), 
+        IntegerEntry(daoRewardKey, daoReward)]
+
+    ([genesisBlockMeta, 
+        StringEntry(chainFirstBlockIdKey(0), genesisBlockHashHex), 
+        mkChainMetaEntry(0, 0, genesisBlockHashHex), 
+        IntegerEntry(minerRewardKey, minerRewardInGwei), 
+        StringEntry(epochMetaKey(height), toString(genesisMinerAddress) + ",0," + genesisBlockHashHex), 
+        StringEntry(finalizedBlockKey, genesisBlockHashHex), 
+        issue, 
+        StringEntry(tokenIdKey, toBase58String(tokenId)), 
+        StringEntry(elBridgeAddressKey, "0x0000000000000000000000000000000000006a7e")
+    ] ++ daoEntries)
+}
+
+@Verifier(tx)
+func verify() = {
+    let u0 = sigVerify_128Kb(tx.bodyBytes, tx.proofs[0], base58'66Fb7Ef34ainTAL887b57BVCNBrtdRyA86dSAXuwt2mn')
+    let u1 = sigVerify_128Kb(tx.bodyBytes, tx.proofs[1], base58'F5ComSeqBY46duPnYYh9YkrEAe12Ztaq1rDQqtYZFpKp')
+    let u2 = sigVerify_128Kb(tx.bodyBytes, tx.proofs[2], base58'53TLiKfhLWr2tN9DLgEHs8sf42hbUj3JpE6uxsDPZtnM')
+    u0 && (u1 || u2) || (u1 && u2)
+}
