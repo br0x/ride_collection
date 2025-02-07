@@ -1,0 +1,10 @@
+Rewritten and optimized version of this contract: https://github.com/Isgeny/mass-token-transfer
+Mainnet address: 3PMXFRwQY3VfZcJdywACvJRSkS9bsLTPWjr
+Testnet address: 3NAAQMEFj8Cy37pzLC4gtTeHbuaEiGEX1M3 
+
+In the following example:
+3MxAH1Q1kCsHdMrKioThpNTPCdKdty4ikdx gets 1000_0000 WAVELETS
+3N7HtrKeFFLz5oy6PfGv1Lg3GwPk4gCPdGy gets 4000_0000 WAVELETS
+3N7HtrKeFFLz5oy6PfGv1Lg3GwPk4gCPdGy gets 2000_0000 of token 8i8WqH4KvWauvEiLmhod4nrt1Xgpn8pc6bzCPR8CozK5
+3MxAH1Q1kCsHdMrKioThpNTPCdKdty4ikdx gets 3000_0000 of token FFtkQvTzC3nfKJuXeWL3ijwchqb3WfMno4piDX7vPvWV
+

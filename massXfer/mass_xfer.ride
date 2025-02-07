@@ -1,0 +1,33 @@
+{-# STDLIB_VERSION 8 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+# Each transfer is combined from the j-th element of each of the arrays: recipients, amounts and paymentIdx
+# amounts: List[Int] - amount of assets to be transferred for each j-th recipient
+# paymentIdx: List[Int] - index in i.payments array which corresponds to j-th amount (to get assetId)
+# attachment is ignored by the code, but stays in the blockchain
+@Callable(i)
+func massXfer(recipients: List[String], amounts: List[Int], paymentIdx: List[Int], attachment: String) = {
+    if (!(recipients.size() == amounts.size() && recipients.size() == paymentIdx.size())) then throw("Array sizes mismatch") else
+
+    let recipientsSize = recipients.size()
+    # acc: (List[ScriptTransfer], j: Int, aggregatedAmounts: List[Int])
+    func xferGen(acc: (List[ScriptTransfer], Int, List[Int]), addr: String) = {
+        let (xfers, j, aggrs) = acc
+        let pIdx = paymentIdx[j]
+        if (pIdx >= i.payments.size()) then throw("paymentIdx out of bounds") else
+        let pj = i.payments[pIdx]
+        let amount = amounts[j]
+        (xfers :+ ScriptTransfer(addressFromStringValue(addr), amount, pj.assetId), j + 1, aggrs.replaceByIndex(pIdx, aggrs[pIdx] + amount))
+    }
+    let result = FOLD<100>(recipients, ([], 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), xferGen)
+    let aggrs = result._3
+
+    func validate(a: Int, p: AttachedPayment) = {
+        if (aggrs[a] != p.amount) then throw("Aggregated amounts don't match payments") else
+        a + 1
+    }
+    let validated = FOLD<10>(i.payments, 0, validate)
+
+    (result._1, validated)
+}

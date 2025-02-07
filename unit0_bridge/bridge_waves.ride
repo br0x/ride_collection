@@ -134,11 +134,11 @@ func mkBlockMetaEntry (blockHashHex: String, blockHeight: Int, blockParentHex: S
 func lastHeightBy (miner: Address, chainId: Int) = match getInteger(chainLastHeightKey(chainId, miner)) {
     case h: Int => h
     case _ => 
-        let blockHash = getStringValue(((("chain" + toString(chainId)) + "LastMinedBy") + toString(miner)))
+        let blockHash = getStringValue("chain" + toString(chainId) + "LastMinedBy" + toString(miner))
         blockMeta(blockHash)._1
 }
 
-let (computedGenerator, computedTotalBalance, ignored3, ignored4) = {
+let (computedGenerator, computedTotalBalance) = {
     let hitSource = match lastBlock.vrf {
         case vrf: ByteVector => vrf
         case _ => lastBlock.generationSignature
@@ -192,7 +192,7 @@ func calculateFinalizedBlockHashAndEpoch (curMiner: Address, curPrevEpoch: Int, 
             case _ => prev
         }
     }
-    let (finalizedEpoch, finalizedBlockHashOpt, ignored1, ignored2) = FOLD<100>(offsets_100, (height, unit, 0, [], 0), step)
+    let (finalizedEpoch, finalizedBlockHashOpt) = FOLD<100>(offsets_100, (height, unit, 0, [], 0), step)
     (match finalizedBlockHashOpt {
         case finalizedBlockHash: String => finalizedBlockHash
         case _ => epochMeta(finalizedEpoch).value()._3
@@ -230,7 +230,8 @@ func chainIsInactive (chainId: Int) = {
     if ((firstValidAltChainId > chainId))
         then true
         else (blockMeta(getStringValue(finalizedBlockKey))._1 > blockMeta(firstBlockId)._1)
-    }
+}
+
 func minerChainId (miner: Address) = valueOrElse(getInteger(minerChainIdKey(miner)), getInteger(("chainIdOf" + toString(miner))))
 
 func ensureExpectedOrInactiveChain (generator: Address, expectedChainId: Int, checkHeightBlock: String|Unit) = {
@@ -280,11 +281,11 @@ func setOrFail (flags: String, index: Int) = {
     if (index >= flagsSize) then {
         let addZeroes = index - flagsSize
         if (addZeroes > size(zeroesStr)) then throw("Can't add " + toString(addZeroes) + " empty flags. Contact with developers") else 
-        ((flags + take(zeroesStr, addZeroes)) + "1")
+        (flags + take(zeroesStr, addZeroes) + "1")
     } else {
         let tail = drop(flags, index)
         let atIndex = take(tail, 1)
-        if (atIndex != "0") then throw((("Transfer #" + toString(index)) + " has been already taken")) else
+        if (atIndex != "0") then throw("Transfer #" + toString(index) + " has been already taken") else
         (take(flags, index) + "1" + drop(tail, 1))
     }
 }
