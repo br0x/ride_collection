@@ -2,15 +2,37 @@
 {-# CONTENT_TYPE DAPP #-}
 {-# SCRIPT_TYPE ACCOUNT #-}
 
+# Each transfer is combined from the j-th element of arrays: recipients and amounts
+# amounts: amount of assets to be transferred for each j-th recipient
+# attachment is ignored by the code, but stays in the blockchain
+@Callable(i)
+func massXfer0(recipients: List[String], amounts: List[Int], attachment: String) = {
+    if (recipients.size() != amounts.size()) then throw("Array sizes mismatch") else
+    if (i.payments.size() != 1) then throw("Exactly 1 payment expected") else
+    let payment = i.payments[0]
+
+    # acc: (List[ScriptTransfer], j: Int, aggregatedAmount: Int)
+    func xferGen0(acc: (List[ScriptTransfer], Int, Int), addr: String) = {
+        let (xfers, j, aggr) = acc
+        let amount = amounts[j]
+        (xfers :+ ScriptTransfer(addressFromStringValue(addr), amount, payment.assetId), j + 1, aggr + amount)
+    }
+    let result = FOLD<100>(recipients, ([], 0, 0), xferGen0)
+
+    if (result._3 !=  payment.amount) then throw("Aggregated amount doesn't match payment") else
+
+    (result._1, 0)
+}
+
 # Each transfer is combined from the j-th element of each of the arrays: recipients, amounts and paymentIdx
 # amounts: List[Int] - amount of assets to be transferred for each j-th recipient
 # paymentIdx: List[Int] - index in i.payments array which corresponds to j-th amount (to get assetId)
 # attachment is ignored by the code, but stays in the blockchain
 @Callable(i)
 func massXfer(recipients: List[String], amounts: List[Int], paymentIdx: List[Int], attachment: String) = {
-    if (!(recipients.size() == amounts.size() && recipients.size() == paymentIdx.size())) then throw("Array sizes mismatch") else
-
     let recipientsSize = recipients.size()
+    if (!(recipientsSize == amounts.size() && recipientsSize == paymentIdx.size())) then throw("Array sizes mismatch") else
+
     # acc: (List[ScriptTransfer], j: Int, aggregatedAmounts: List[Int])
     func xferGen(acc: (List[ScriptTransfer], Int, List[Int]), addr: String) = {
         let (xfers, j, aggrs) = acc
